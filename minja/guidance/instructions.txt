@@ -1,0 +1,51 @@
+﻿||||||||||
+
+INSTRUCTIONS FOR READING
+
+This text is written in the Gurmukhi script, which is used primarily to write the Punjabi language. Specifically, this appears to be Gurbani (sacred Sikh scripture) from the Guru Granth Sahib, the central holy text of Sikhism.
+
+Here's a breakdown to help you decode it:
+
+1. Script and Language:
+
+Script: Gurmukhi (meaning "from the mouth of the Guru"). It's an abugida script where consonants have an inherent vowel, and other vowels are marked with diacritics (matras). Letters are typically connected by a horizontal top line (Siro Rekha).
+Language: Punjabi (specifically, the liturgical form found in Gurbani, which includes influences from Sanskrit, Persian, Braj Bhasha, and other languages of the time).
+2. Content Identification:
+
+The text begins with the Mool Mantar (à©´ siq nwmu... gur pRswid ]), the foundational statement of Sikh theology.
+It then includes the Japji Sahib (] jpu ]), the first composition in the Guru Granth Sahib, authored by Guru Nanak Dev Ji. This is indicated by the title and the first verse (Awid scu jugwid scu... ]1]).
+The text continues with subsequent Pauris (stanzas) of Japji Sahib, followed by other sections like So Dar and Sohila (evening prayers), and hymns (Shabads) from various Raags (musical modes), such as Sri Raag, Asa, Gujri, etc.
+3. Decoding Key Symbols and Terms:
+
+à©´ (Ik Onkar): The symbol representing the core Sikh belief in the One Creator/Reality. It translates roughly to "There Is One Creator God."
+<>: Often appears with à©´. Represents the unity and all-pervasiveness of the One Creator.
+siq nwmu (Sat Nam): True Name/Identity.
+krqw purKu (Karta Purakh): The Creator Being.
+inrBau (Nirbhau): Without Fear.
+inrvYru (Nirvair): Without Enmity/Hatred.
+Akwl mUriq (Akal Murat): Being Beyond Time, Undying Form.
+AjUnI (Ajuni): Unborn, Not Incarnated.
+sYBM (Saibhang): Self-Existent.
+gur pRswid (Gur Prasad): By Guru's Grace/Kindness.
+] (Danda): Punctuation mark indicating the end of a line or sentence. ]] (Double Danda) often marks the end of a verse or section.
+Numerals (1, 2, 3...): Indicate stanza (Pauri) or Shabad numbers.
+Ã“Ã“ (with numbers): These appear to be page numbers or separators in this specific digital copy, not part of the original scripture text itself.
+mhlw (Mahala): Indicates the Sikh Guru who authored the hymn.
+mhlw 1 (or m: 1) = Guru Nanak Dev Ji
+mhlw 3 (or m: 3) = Guru Amar Das Ji
+mhlw 4 (or m: 4) = Guru Ram Das Ji
+mhlw 5 (or m: 5) = Guru Arjan Dev Ji
+rhwau (Rahao): Means "pause." This line usually contains the central theme or refrain of the Shabad.
+sloku (Salok): A specific poetic form, often appearing before or after a Pauri or Shabad.
+Titles like jpu, so dru, soihlw, rwgu Awsw, rwgu gUjrI, isrIrwgu: These name the specific composition or the Raag (classical Indian musical mode) in which the hymn is meant to be sung.
+Gru (Ghar): Refers to a musical timing or rhythm instruction (literally "house").
+4. How to Understand:
+
+Transliteration: Gurmukhi script can be transliterated into the Latin alphabet to help with pronunciation if you don't read the script. Many different transliteration schemes exist. For example:
+siq nwmu becomes Sat Naam
+nwnk becomes Nanak
+Translation: To understand the meaning, you need a translation into a language you know (like English). There are many translations available online and in print.
+Context: Understanding Gurbani fully involves understanding its historical, cultural, linguistic, and deep spiritual context within Sikh philosophy.
+In essence, this text is a collection of foundational Sikh prayers and hymns from the Guru Granth Sahib, written in the Gurmukhi script. Decoding it involves recognizing the script, understanding key terms and symbols, and ideally using transliteration for pronunciation and translation for meaning.
+
+||||||||||

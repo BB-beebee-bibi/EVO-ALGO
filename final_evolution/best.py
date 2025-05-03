@@ -1,0 +1,2 @@
+def gumwz():
+    return 'Hello'

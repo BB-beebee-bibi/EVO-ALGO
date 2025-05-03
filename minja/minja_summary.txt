@@ -1,0 +1,154 @@
+# Minja Project Summary
+
+## Purpose & Vision
+Minja is a lightweight, boundary-respecting reconnaissance agent designed to gather structural system information with minimal intrusion and impact. It prioritizes stealth and leaving no trace, guided by principles of precision and respect for system integrity.
+
+## Project History & Evolution
+- **Concept:** Originated from the need for subtle system discovery and analysis.
+- **Design Focus:** Emphasized metadata/structural information gathering over content inspection.
+- **Features Developed:** Capabilities likely include low-impact network mapping, service ID, configuration analysis.
+- **Core Tenets:** Self-contained operation and self-cleaning capabilities were central.
+- **Principle Alignment:** Designed around respect for boundaries, non-disruption, truthful reporting, and minimal necessary action.
+
+## Core Principles (Operationalized)
+-   **Minimal Footprint:** Low network/system load techniques.
+-   **Boundary Adherence:** Strict respect for access controls.
+-   **Metadata Focus:** Prioritize structure over content.
+-   **Leave No Trace:** Non-persistent, self-cleaning operations.
+-   **Accurate Reporting:** Factual presentation of findings.
+-   **Targeted Action:** Objective-driven reconnaissance steps.
+
+## Key Objectives
+-   Gather system/network info subtly.
+-   Analyze system structures and configurations.
+-   Operate respectfully within boundaries.
+-   Achieve goals with minimal interaction/resources.
+-   Be self-contained and leave no trace.
+
+## Technical Architecture (Conceptual)
+-   **Modules:** Discovery (low-impact scanning), Analysis Engine (configs, dependencies), Stealth Mechanisms, Reporting Unit, Self-Cleaning Routine, Boundary Governor.
+
+## Design Philosophy (Implicit Guidance)
+-   **Respect:** Deference to system boundaries/integrity.
+-   **Precision:** Focused, minimal necessary action.
+-   **Subtlety:** Unobtrusive methods.
+-   **Objectivity:** Factual reporting.
+-   **Cleanliness:** Leave no operational trace.
+
+## Implicit Guidance Goal
+Minja embodies respectful exploration. Its operational constraints (minimal impact, boundary adherence) serve as an implicit model for responsible information gathering.
+
+## Connection to Other Projects
+-   **Citadel:** Potential use for assessing protected systems respectfully.
+-   **Mool/Trisolaris:** Could provide environmental context to cooperative agents.
+-   **Gurbani Project:** Source of guiding principles (respect, minimal action).
+
+## Success Metrics
+-   Minimal detectability during reconnaissance.
+-   Strict boundary adherence.
+-   Accurate, factual reporting.
+-   Low resource/system impact.
+-   No persistent operational artifacts.
+
+## Origin and Purpose
+Minja began as a comprehensive system analysis tool designed to scan and document device file structures and system configurations. It evolved from a basic directory walker to a sophisticated analysis and security reconnaissance tool that can be deployed across different devices to gather structural information without accessing sensitive content.
+
+## Path of Development
+1. **Initial Version**:
+   - Started as `minja.c`: A basic C-based directory walker
+   - Evolved to Python for greater flexibility and portability
+
+2. **Feature Expansion**:
+   - Extensive file categorization system
+   - Content extraction based on file type
+   - Binary file handling capabilities
+   - Smart processing with optional dependencies
+   - Memory-efficient processing with built-in size limits
+   - Special LLM-friendly output formatting
+
+3. **Security Integration**:
+   - Added self-cleaning capability (leaves no trace after analysis)
+   - Designed deployment mechanism for new network devices
+   - Developed secure storage for collected data
+
+4. **Citadel Integration**:
+   - Adapted for integration with Project Citadel
+   - Enhanced as a device reconnaissance tool
+   - Created deployment scripts for automated scanning
+
+## Current State
+- **Functional Core**: The basic system analysis tool is operational
+- **Cross-Platform**: Has both PowerShell (Windows) and Bash (Linux) implementations
+- **Integration Ready**: Designed to work with Project Citadel
+- **Well-Documented**: Detailed project summaries and instructions
+
+## Key Components
+1. **Core Files**:
+   - `minja.py`: Main Python implementation
+   - `minja.ps1`: PowerShell wrapper for Windows usage
+   - `setup_minja_pi.sh`: Installation script for Raspberry Pi
+
+2. **Analysis Features**:
+   - File system structure mapping
+   - Metadata extraction
+   - Content classification
+   - Data extraction based on file types
+
+3. **Security Features**:
+   - Isolated execution in temporary directories
+   - No extraction of sensitive data
+   - Self-cleaning after analysis
+   - Secure result storage
+
+## Challenges and Limitations
+- Binary file content extraction limited to metadata
+- Large file handling requires truncation
+- Currently focused on known file types
+- Needs manual triggering in Windows environments
+
+## Trajectory Forward
+1. **Immediate Next Steps**:
+   - Deploy on the new Linux SSD environment
+   - Finalize integration with Citadel
+   - Test on various devices to ensure compatibility
+
+2. **Medium-term Goals**:
+   - Enhance file type support
+   - Improve performance for larger file systems
+   - Develop plugin system for extensibility
+   - Implement real-time device change detection
+
+3. **Long-term Vision**:
+   - Create GUI for result analysis
+   - Integrate with security compliance checking
+   - Develop custom security rule definitions
+   - Add network connection mapping capabilities
+
+## Dependencies and Requirements
+- Python 3.6+
+- PowerShell (for Windows)
+- Optional dependencies:
+  - python-docx (for DocX parsing)
+  - PyPDF2 (for PDF extraction)
+  - BeautifulSoup4 (for HTML parsing)
+  - Pillow (for image analysis)
+  - pytesseract (for OCR capabilities)
+
+## Key Files and Resources
+- `minja.py`: Core analysis tool
+- `minja.ps1`: Windows PowerShell wrapper
+- `setup_minja_pi.sh`: Raspberry Pi installation script
+- `project_summary_for_llms.md`: Detailed explanation of the project
+- `tailscale_analysis.txt`: Integration with Tailscale network
+
+## Team Involvement
+- Designed for multi-team member usage
+- Special output formatting for AI assistants
+- Clear usage examples for non-technical users
+
+## Critical Success Factors
+- Seamless integration with Citadel
+- Reliable device detection
+- Clean self-destruction after analysis
+- Accurate file system mapping
+- Cross-platform compatibility 
