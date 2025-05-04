@@ -7,5 +7,6 @@ using the TRISOLARIS evolutionary framework.
 
 from trisolaris.tasks.base import TaskInterface, TrisolarisBoundary
 from trisolaris.tasks.drive_scanner import DriveScannerTask
+from trisolaris.tasks.network_scanner import NetworkScannerTask
 
-__all__ = ['TaskInterface', 'TrisolarisBoundary', 'DriveScannerTask']
+__all__ = ['TaskInterface', 'TrisolarisBoundary', 'DriveScannerTask', 'NetworkScannerTask']
