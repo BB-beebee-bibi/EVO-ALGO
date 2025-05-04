@@ -1,1133 +1,557 @@
 """
 Ethical Boundary Enforcer for the TRISOLARIS framework.
 
-This module implements hard constraints for code evaluation, ensuring solutions
-adhere to ethical boundaries and safety standards.
+This module implements strict ethical filters that enforce boundaries on what
+evolved code can do, ensuring it operates within safe and ethical constraints.
 """
 
 import ast
 import re
-import os
-import subprocess
-import tempfile
-import threading
-import time
-import platform
-from typing import List, Dict, Set, Optional, Any, Union, Callable
+import logging
+import inspect
+from typing import List, Dict, Set, Optional, Any, Callable, Union
 
-# Platform-specific imports
-if platform.system() != 'Windows':
-    import resource  # Unix-only module
-else:
-    # Windows alternative for resource monitoring
-    import psutil
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class EthicalBoundaryEnforcer:
     """
-    Implements hard ethical and safety constraints for code evaluation.
+    Enforces ethical boundaries on evolved code to ensure safety and ethical compliance.
     
-    This class provides a framework for checking code solutions against various
-    ethical and safety constraints before they undergo fitness evaluation.
+    This class implements a set of filters that analyze code for potential safety
+    issues and ethical concerns before it is evaluated or executed.
     """
     
     def __init__(self):
-        """Initialize the Ethical Boundary Enforcer with default boundaries."""
-        # Dictionary of boundary checking functions
-        self.boundaries = {
-            # System boundaries
+        """Initialize the ethical boundary enforcer."""
+        self.boundaries = {}
+        self.boundary_results = {}
+        self.violation_history = []
+        
+        # Define standard boundary checks
+        self._standard_boundaries = {
+            # Safety-critical boundaries
             "no_system_calls": self._check_no_system_calls,
+            "no_eval_exec": self._check_no_eval_exec,
             "no_file_operations": self._check_no_file_operations,
             "no_network_access": self._check_no_network_access,
-            "no_process_creation": self._check_no_process_creation,
             "no_imports": self._check_no_imports,
+            "max_execution_time": self._check_max_execution_time,
+            "max_memory_usage": self._check_max_memory_usage,
             
-            # Resource boundaries
-            "max_execution_time": self._check_execution_time,
-            "max_memory_usage": self._check_memory_usage,
-            
-            # Privacy boundaries
-            "no_pii_access": self._check_no_pii_access,
-            
-            # Security boundaries
-            "no_eval_exec": self._check_no_eval_exec,
-            
-            # Universal harmony boundaries
+            # Gurbani-inspired ethical boundaries
             "universal_equity": self._check_universal_equity,
             "truthful_communication": self._check_truthful_communication,
             "humble_code": self._check_humble_code,
             "service_oriented": self._check_service_oriented,
             "harmony_with_environment": self._check_harmony_with_environment
         }
-        
-        # Boundary parameters
-        self.parameters = {
-            "max_execution_time": 1.0,  # seconds
-            "max_memory_usage": 100,    # MB
-            "allowed_imports": set(),   # empty set means all imports are blocked
-            "bias_terms": set([
-                "superior", "inferior", "better than", "worse than",
-                "master", "slave", "blacklist", "whitelist",
-                "dominate", "control", "exploit"
-            ]),
-            "excluded_groups": set([
-                "gender", "race", "nationality", "ethnicity", "religion",
-                "age", "disability", "orientation", "identity", "class"
-            ])
-        }
-        
-        # Active boundaries
-        self.active_boundaries = set()
     
-    def add_boundary(self, boundary_name: str, **kwargs):
+    def check(self, genome) -> bool:
         """
-        Activate a boundary with optional parameters.
+        Check if a genome passes all ethical boundaries. This is an alias for check_all_boundaries.
         
         Args:
-            boundary_name: Name of the boundary to activate
-            **kwargs: Optional parameters for the boundary
-        """
-        if boundary_name not in self.boundaries:
-            raise ValueError(f"Unknown boundary: {boundary_name}")
-        
-        self.active_boundaries.add(boundary_name)
-        
-        # Update parameters if provided
-        for param, value in kwargs.items():
-            if param in self.parameters:
-                self.parameters[param] = value
-    
-    def remove_boundary(self, boundary_name: str):
-        """
-        Deactivate a boundary.
-        
-        Args:
-            boundary_name: Name of the boundary to deactivate
-        """
-        if boundary_name in self.active_boundaries:
-            self.active_boundaries.remove(boundary_name)
-    
-    def check(self, genome: Any) -> bool:
-        """
-        Check if a genome passes all active ethical boundaries.
-        
-        Args:
-            genome: The code genome to check
+            genome: The genome to check
             
         Returns:
             True if all boundaries pass, False otherwise
         """
-        # Get the source code from the genome
-        if hasattr(genome, 'to_source'):
-            source_code = genome.to_source()
-        else:
-            source_code = str(genome)
+        return self.check_all_boundaries(genome)
+    
+    def add_boundary(self, boundary_name: str, **kwargs) -> None:
+        """
+        Add an ethical boundary check to the enforcer.
         
-        # Check each active boundary
-        for boundary in self.active_boundaries:
-            check_func = self.boundaries[boundary]
+        Args:
+            boundary_name: Name of the boundary to add
+            **kwargs: Parameters for the boundary check
+        """
+        if boundary_name in self._standard_boundaries:
+            self.boundaries[boundary_name] = {
+                'check': self._standard_boundaries[boundary_name],
+                'params': kwargs
+            }
+            logger.info(f"Added boundary: {boundary_name}")
+        else:
+            logger.error(f"Unknown boundary: {boundary_name}")
+    
+    def add_custom_boundary(self, name: str, check_function: Callable, **kwargs) -> None:
+        """
+        Add a custom boundary check.
+        
+        Args:
+            name: Name for the custom boundary
+            check_function: Function that implements the check
+            **kwargs: Parameters for the check function
+        """
+        self.boundaries[name] = {
+            'check': check_function,
+            'params': kwargs
+        }
+        logger.info(f"Added custom boundary: {name}")
+    
+    def check_all_boundaries(self, genome) -> bool:
+        """
+        Check if a genome satisfies all defined ethical boundaries.
+        
+        Args:
+            genome: The genome to check
             
-            # Get boundary-specific parameters
-            params = {k: v for k, v in self.parameters.items() 
-                     if k in check_func.__code__.co_varnames}
-            
-            # Check the boundary
-            if not check_func(source_code, **params):
+        Returns:
+            True if all boundaries are satisfied, False otherwise
+        """
+        self.boundary_results = {}
+        all_passed = True
+        
+        # Get the source code from the genome
+        try:
+            source = genome.to_source()
+        except Exception as e:
+            logger.error(f"Failed to get source from genome: {str(e)}")
+            return False
+        
+        # Apply each boundary check
+        for name, boundary in self.boundaries.items():
+            try:
+                check_func = boundary['check']
+                params = boundary['params']
+                passed = check_func(source, **params)
+                self.boundary_results[name] = passed
+                
+                if not passed:
+                    logger.warning(f"Boundary violation: {name}")
+                    self.violation_history.append({
+                        'boundary': name,
+                        'source_excerpt': source[:200] + ('...' if len(source) > 200 else '')
+                    })
+                    all_passed = False
+            except Exception as e:
+                logger.error(f"Error checking boundary '{name}': {str(e)}")
+                self.boundary_results[name] = False
+                all_passed = False
+        
+        return all_passed
+    
+    def get_boundary_results(self) -> Dict[str, bool]:
+        """
+        Get the results of the last boundary check.
+        
+        Returns:
+            Dictionary mapping boundary names to check results (True/False)
+        """
+        return self.boundary_results
+    
+    def get_active_boundaries(self) -> List[str]:
+        """
+        Get the names of all active boundaries.
+        
+        Returns:
+            List of active boundary names
+        """
+        return list(self.boundaries.keys())
+    
+    def get_violation_history(self) -> List[Dict]:
+        """
+        Get the history of boundary violations.
+        
+        Returns:
+            List of violation records
+        """
+        return self.violation_history
+    
+    def clear_violation_history(self) -> None:
+        """Clear the violation history."""
+        self.violation_history = []
+    
+    # === Safety-Critical Boundary Checks ===
+    
+    def _check_no_system_calls(self, source: str, **kwargs) -> bool:
+        """Check that the code doesn't attempt to make system calls."""
+        # Check for os.system, subprocess, etc.
+        patterns = [
+            r'\bos\.system\s*\(',
+            r'\bsubprocess\.',
+            r'\bshell\s*=\s*True',
+            r'\bcommand\s*\(',
+            r'\bpopen\s*\(',
+            r'`[^`]*`',  # Backticks for command substitution
+            r'\bexec\s*\(',
+            r'\bshutil\..*exec',
+        ]
+        
+        for pattern in patterns:
+            if re.search(pattern, source, re.IGNORECASE):
                 return False
         
         return True
     
-    def explain_violations(self, genome: Any) -> Dict[str, str]:
-        """
-        Check a genome against all active boundaries and return explanations for violations.
-        
-        Args:
-            genome: The code genome to check
-            
-        Returns:
-            Dictionary mapping boundary names to violation explanations
-        """
-        # Get the source code from the genome
-        if hasattr(genome, 'to_source'):
-            source_code = genome.to_source()
-        else:
-            source_code = str(genome)
-        
-        violations = {}
-        
-        # Check each active boundary
-        for boundary in self.active_boundaries:
-            check_func = self.boundaries[boundary]
-            
-            # Get boundary-specific parameters
-            params = {k: v for k, v in self.parameters.items() 
-                     if k in check_func.__code__.co_varnames}
-            
-            # Call the check function with an explanation flag
-            params['explain'] = True
-            result, explanation = check_func(source_code, **params)
-            
-            if not result:
-                violations[boundary] = explanation
-        
-        return violations
-    
-    def _check_no_system_calls(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
-        """Check that code doesn't contain system calls."""
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Define system call patterns
-        system_call_patterns = [
-            # os module system calls
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and 
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id == 'os' and
-                node.func.attr in ['system', 'popen', 'spawn', 'exec', 
-                                  'execl', 'execlp', 'execle', 'execv', 
-                                  'execvp', 'execvpe']
-            )),
-            # subprocess module calls
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and 
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id == 'subprocess' and
-                node.func.attr in ['run', 'call', 'check_call', 'check_output', 
-                                  'Popen']
-            )),
-            # direct calls to system
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Name) and
-                node.func.id in ['system', 'popen', 'execl', 'execlp', 'execle',
-                               'execv', 'execvp', 'execvpe']
-            )),
+    def _check_no_eval_exec(self, source: str, **kwargs) -> bool:
+        """Check that the code doesn't use eval() or exec()."""
+        patterns = [
+            r'\beval\s*\(',
+            r'\bexec\s*\(',
+            r'\bcompile\s*\([^)]*\bexec\b',
+            r'__import__\s*\(',
         ]
         
-        # Check for system calls
-        violations = []
-        for node in ast.walk(tree):
-            for node_type, check_func in system_call_patterns:
-                if isinstance(node, node_type) and check_func(node):
-                    if explain:
-                        violations.append(f"System call found: {ast.unparse(node)}")
-                    else:
-                        return False
+        for pattern in patterns:
+            if re.search(pattern, source, re.IGNORECASE):
+                return False
         
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
-    
-    def _check_no_file_operations(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
-        """Check that code doesn't contain file operations."""
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Define file operation patterns
-        file_operation_patterns = [
-            # open() function
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Name) and
-                node.func.id == 'open'
-            )),
-            # file methods
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and
-                node.func.attr in ['read', 'write', 'readline', 'readlines', 
-                                 'writelines', 'seek', 'tell']
-            )),
-            # os file operations
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id == 'os' and
-                node.func.attr in ['remove', 'unlink', 'rmdir', 'mkdir', 
-                                  'makedirs', 'rename', 'replace']
-            )),
-            # with open as pattern
-            (ast.With, lambda node: any(
-                isinstance(item.context_expr, ast.Call) and
-                isinstance(item.context_expr.func, ast.Name) and
-                item.context_expr.func.id == 'open'
-                for item in node.items
-            )),
-        ]
-        
-        # Check for file operations
-        violations = []
-        for node in ast.walk(tree):
-            for node_type, check_func in file_operation_patterns:
-                if isinstance(node, node_type) and check_func(node):
-                    if explain:
-                        violations.append(f"File operation found: {ast.unparse(node)}")
-                    else:
-                        return False
-        
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
-    
-    def _check_no_network_access(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
-        """Check that code doesn't contain network access."""
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Import patterns to look for
-        network_imports = [
-            'socket', 'http', 'urllib', 'requests', 'ftplib', 'smtplib',
-            'telnetlib', 'imaplib', 'nntplib', 'poplib'
-        ]
-        
-        # Network function call patterns
-        network_call_patterns = [
-            # socket operations
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id == 'socket' and
-                node.func.attr in ['socket', 'connect', 'bind', 'listen', 'accept']
-            )),
-            # urllib/requests
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id in ['urllib', 'requests'] and
-                node.func.attr in ['get', 'post', 'put', 'delete', 'head', 
-                                  'request', 'urlopen']
-            )),
-        ]
-        
-        # Check for network imports
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for name in node.names:
-                    if any(name.name == module or name.name.startswith(f"{module}.") 
-                          for module in network_imports):
-                        if explain:
-                            return False, f"Network module import found: {name.name}"
-                        return False
-            elif isinstance(node, ast.ImportFrom):
-                if node.module in network_imports or any(node.module.startswith(f"{module}.") 
-                                                      for module in network_imports):
-                    if explain:
-                        return False, f"Network module import found: {node.module}"
-                    return False
-        
-        # Check for network calls
-        for node in ast.walk(tree):
-            for node_type, check_func in network_call_patterns:
-                if isinstance(node, node_type) and check_func(node):
-                    if explain:
-                        return False, f"Network operation found: {ast.unparse(node)}"
-                    return False
-        
-        if explain:
-            return True, ""
         return True
     
-    def _check_no_process_creation(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
-        """Check that code doesn't create new processes."""
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Process creation patterns
-        process_creation_patterns = [
-            # multiprocessing module
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id == 'multiprocessing' and
-                node.func.attr in ['Process', 'Pool']
-            )),
-            # threading module
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id == 'threading' and
-                node.func.attr == 'Thread'
-            )),
-            # concurrent.futures
-            (ast.Call, lambda node: (
-                isinstance(node.func, ast.Attribute) and
-                isinstance(node.func.value, ast.Attribute) and
-                isinstance(node.func.value.value, ast.Name) and
-                node.func.value.value.id == 'concurrent' and
-                node.func.value.attr == 'futures' and
-                node.func.attr in ['ProcessPoolExecutor', 'ThreadPoolExecutor']
-            )),
-        ]
-        
-        # Check for process creation
-        violations = []
-        for node in ast.walk(tree):
-            for node_type, check_func in process_creation_patterns:
-                if isinstance(node, node_type) and check_func(node):
-                    if explain:
-                        violations.append(f"Process creation found: {ast.unparse(node)}")
-                    else:
-                        return False
-        
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
-    
-    def _check_no_eval_exec(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
-        """Check that code doesn't use eval() or exec()."""
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Look for eval or exec
-        violations = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in ['eval', 'exec']:
-                if explain:
-                    violations.append(f"Insecure {node.func.id}() found: {ast.unparse(node)}")
-                else:
-                    return False
-        
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
-    
-    def _check_no_imports(self, source_code: str, allowed_imports: Set[str] = None, 
-                         explain: bool = False) -> Union[bool, tuple]:
+    def _check_no_file_operations(self, source: str, allowed_dirs: List[str] = None, **kwargs) -> bool:
         """
-        Check that code doesn't import unauthorized modules.
+        Check that the code doesn't perform file operations outside allowed directories.
         
         Args:
-            source_code: Code to check
-            allowed_imports: Set of allowed import module names
-            explain: Whether to return explanation
+            source: Code source to check
+            allowed_dirs: List of directories where file operations are allowed
+        """
+        if allowed_dirs is None:
+            # If no directories are explicitly allowed, check for any file operations
+            patterns = [
+                r'\bopen\s*\(',
+                r'\.write\s*\(',
+                r'\.read\s*\(',
+                r'\.writelines\s*\(',
+                r'\.readlines\s*\(',
+                r'\bos\.remove\s*\(',
+                r'\bos\.unlink\s*\(',
+                r'\bos\.rename\s*\(',
+                r'\bos\.makedirs\s*\(',
+                r'\bshutil\.copy',
+                r'\bshutil\.move',
+                r'\bpathlib\.Path'
+            ]
             
-        Returns:
-            Boolean result or (result, explanation) tuple
+            for pattern in patterns:
+                if re.search(pattern, source, re.IGNORECASE):
+                    return False
+            
+            return True
+        else:
+            # TODO: Implement more sophisticated check for allowed directories
+            # This would require parsing the AST to extract file paths and check them
+            return True
+    
+    def _check_no_network_access(self, source: str, **kwargs) -> bool:
+        """Check that the code doesn't attempt network access."""
+        patterns = [
+            r'\bsocket\.',
+            r'\burllib\.',
+            r'\brequests\.',
+            r'\bhttp\.',
+            r'\burllib2\.',
+            r'\bftplib\.',
+            r'\.connect\s*\(',
+        ]
+        
+        for pattern in patterns:
+            if re.search(pattern, source, re.IGNORECASE):
+                return False
+        
+        return True
+    
+    def _check_no_imports(self, source: str, allowed_imports: Set[str] = None, **kwargs) -> bool:
+        """
+        Check that the code only imports from an allowed list of modules.
+        
+        Args:
+            source: Code source to check
+            allowed_imports: Set of allowed import module names
         """
         if allowed_imports is None:
-            allowed_imports = self.parameters.get('allowed_imports', set())
+            allowed_imports = set()
         
-        # Parse the AST
         try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Check imports
-        violations = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for name in node.names:
-                    if not any(name.name == module or name.name.startswith(f"{module}.") 
-                              for module in allowed_imports):
-                        if explain:
-                            violations.append(f"Unauthorized import: {name.name}")
-                        else:
+            tree = ast.parse(source)
+            
+            # Check all import statements
+            for node in ast.walk(tree):
+                # Regular imports: import x, import x.y
+                if isinstance(node, ast.Import):
+                    for name in node.names:
+                        root_module = name.name.split('.')[0]
+                        if root_module not in allowed_imports:
+                            logger.warning(f"Disallowed import: {root_module}")
                             return False
-            elif isinstance(node, ast.ImportFrom):
-                if not any(node.module == module or node.module.startswith(f"{module}.") 
-                          for module in allowed_imports):
-                    if explain:
-                        violations.append(f"Unauthorized import from: {node.module}")
-                    else:
-                        return False
-        
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
-    
-    def _check_execution_time(self, source_code: str, max_execution_time: float = 1.0,
-                            explain: bool = False) -> Union[bool, tuple]:
-        """
-        Check that code execution doesn't exceed time limit.
-        
-        Args:
-            source_code: Code to check
-            max_execution_time: Maximum allowed execution time in seconds
-            explain: Whether to return explanation
+                
+                # From imports: from x import y, from x.y import z
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        root_module = node.module.split('.')[0]
+                        if root_module not in allowed_imports:
+                            logger.warning(f"Disallowed import from: {root_module}")
+                            return False
             
-        Returns:
-            Boolean result or (result, explanation) tuple
-        """
-        # Create a temporary file
-        with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as temp_file:
-            temp_file.write(source_code)
-            temp_file_path = temp_file.name
-        
-        try:
-            # Set up a timeout mechanism for execution
-            result = {"completed": False, "time": 0}
-            
-            def run_code():
-                start_time = time.time()
-                try:
-                    subprocess.run(['python', temp_file_path], 
-                                  timeout=max_execution_time, 
-                                  capture_output=True, 
-                                  check=False)
-                    result["completed"] = True
-                except subprocess.TimeoutExpired:
-                    result["completed"] = False
-                result["time"] = time.time() - start_time
-            
-            # Run in a separate thread to handle internal timeouts
-            thread = threading.Thread(target=run_code)
-            thread.start()
-            thread.join(max_execution_time + 0.5)  # Give a little extra time for subprocess timeout
-            
-            if thread.is_alive():
-                if explain:
-                    return False, f"Code execution exceeded time limit of {max_execution_time} seconds"
-                return False
-            
-            if not result["completed"] or result["time"] > max_execution_time:
-                if explain:
-                    return False, f"Code execution time of {result['time']:.2f} seconds exceeded limit of {max_execution_time} seconds"
-                return False
-            
-            if explain:
-                return True, f"Code executed in {result['time']:.2f} seconds"
             return True
-            
-        finally:
-            # Clean up
-            try:
-                os.unlink(temp_file_path)
-            except:
-                pass
+        except SyntaxError:
+            # If we can't parse the code, fail closed for safety
+            logger.warning("Syntax error while checking imports")
+            return False
     
-    def _check_memory_usage(self, source_code: str, max_memory_usage: int = 100,
-                          explain: bool = False) -> Union[bool, tuple]:
+    def _check_max_execution_time(self, source: str, max_execution_time: float = 1.0, **kwargs) -> bool:
         """
-        Check that code execution doesn't exceed memory limit.
+        Check if code contains safety measures for execution time limits.
+        
+        This is a static check that looks for patterns indicating time-consuming operations.
+        The actual runtime enforcement needs to happen during execution.
         
         Args:
-            source_code: Code to check
-            max_memory_usage: Maximum allowed memory usage in MB
-            explain: Whether to return explanation
-            
-        Returns:
-            Boolean result or (result, explanation) tuple
+            source: Code source to check
+            max_execution_time: Maximum allowed execution time in seconds
         """
-        # Create a temporary file
-        with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as temp_file:
-            # Indent the source code
-            indented_code = "\n".join("    " + line for line in source_code.splitlines())
-            
-            # Create a wrapper that monitors memory usage
-            if platform.system() != 'Windows':
-                # Unix version using resource module
-                memory_monitoring_code = """
-import resource
-import sys
-
-max_memory_mb = {0}
-
-def monitored_code():
-{1}
-
-peak_memory = 0
-try:
-    monitored_code()
-    # Get peak memory usage
-    peak_memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    # Convert to MB (different units on different platforms)
-    if sys.platform == 'darwin':
-        peak_memory = peak_memory / 1024 / 1024  # macOS reports in bytes
-    else:
-        peak_memory = peak_memory / 1024  # Linux reports in KB
-    
-    print(f"MEMORY_PEAK: {{peak_memory}}")
-except Exception as e:
-    print(f"EXECUTION_ERROR: {{str(e)}}")
-"""
-            else:
-                # Windows version using psutil
-                memory_monitoring_code = """
-import psutil
-import os
-import sys
-
-max_memory_mb = {0}
-
-def monitored_code():
-{1}
-
-peak_memory = 0
-try:
-    process = psutil.Process(os.getpid())
-    monitored_code()
-    # Get peak memory usage in MB
-    peak_memory = process.memory_info().peak_wset / 1024 / 1024
-    print(f"MEMORY_PEAK: {{peak_memory}}")
-except Exception as e:
-    print(f"EXECUTION_ERROR: {{str(e)}}")
-"""
-            
-            # Format the code with memory limit and the source code
-            formatted_code = memory_monitoring_code.format(max_memory_usage, indented_code)
-            temp_file.write(formatted_code)
-            temp_file_path = temp_file.name
+        # Look for potential infinite loops, heavy recursion, etc.
+        patterns = [
+            r'while\s+True\s*:',
+            r'for\s+[^:]+\s+in\s+range\s*\(\s*[0-9]{7,}\s*\)',  # Very large ranges
+        ]
         
-        try:
-            # Run the monitoring code
-            result = subprocess.run(['python', temp_file_path], 
-                                  capture_output=True, 
-                                  text=True,
-                                  check=False)
-            
-            # Extract peak memory usage
-            output = result.stdout + result.stderr
-            memory_match = re.search(r'MEMORY_PEAK: ([\d\.]+)', output)
-            
-            if memory_match:
-                peak_memory = float(memory_match.group(1))
-                if peak_memory > max_memory_usage:
-                    if explain:
-                        return False, f"Code exceeded memory limit: {peak_memory:.2f}MB > {max_memory_usage}MB"
+        for pattern in patterns:
+            if re.search(pattern, source, re.IGNORECASE):
+                # Check if there's a timeout mechanism
+                if not re.search(r'time\.(sleep|time)\s*\(', source, re.IGNORECASE):
+                    logger.warning(f"Potential infinite loop without timeout")
                     return False
-            else:
-                error_match = re.search(r'EXECUTION_ERROR: (.+)', output)
-                if error_match:
-                    error_msg = error_match.group(1)
-                    if explain:
-                        return False, f"Error executing code: {error_msg}"
-                    return False
-                if explain:
-                    return False, "Failed to measure memory usage"
-                return False
-            
-        except Exception as e:
-            if explain:
-                return False, f"Error in memory check: {str(e)}"
-            return False
-        finally:
-            # Clean up
-            os.unlink(temp_file_path)
         
-        if explain:
-            return True, ""
         return True
     
-    def _check_no_pii_access(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
+    def _check_max_memory_usage(self, source: str, max_memory_usage: int = 100, **kwargs) -> bool:
         """
-        Check that code doesn't attempt to access personally identifiable information.
+        Check if code contains patterns that might lead to excessive memory usage.
+        
+        This is a static check that looks for patterns indicating memory-intensive operations.
+        The actual memory enforcement needs to happen during execution.
         
         Args:
-            source_code: Code to check
-            explain: Whether to return explanation
-            
-        Returns:
-            Boolean result or (result, explanation) tuple
+            source: Code source to check
+            max_memory_usage: Maximum allowed memory usage in MB
         """
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Define PII-related patterns
-        pii_patterns = [
-            # String literals with PII keywords
-            (r'\b(password|passwd|secret|key|token|credentials?|ssn|social\s*security|credit\s*card|cc\s*number)\b', 
-             "Contains PII-related keywords"),
-            
-            # Email regex pattern
-            (r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', 
-             "Contains email address pattern"),
-            
-            # Phone number pattern
-            (r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', 
-             "Contains phone number pattern"),
+        # Look for large data structures, etc.
+        patterns = [
+            r'range\s*\(\s*[0-9]{7,}\s*\)',  # Very large ranges
+            r'\[\s*[0-9]+\s*\*\s*[0-9]{6,}\s*\]',  # Large list comprehensions
+            r'\{\s*[0-9]+\s*\:\s*[0-9]+\s*for\s+[^}]+\s+in\s+range\s*\(\s*[0-9]{6,}\s*\)\s*\}',  # Large dict comprehensions
         ]
         
-        # Check string literals for PII patterns
-        violations = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Str) or (hasattr(ast, 'Constant') and 
-                                            isinstance(node, ast.Constant) and 
-                                            isinstance(node.value, str)):
-                
-                # Get the string value
-                string_value = node.s if hasattr(node, 's') else node.value
-                
-                # Check against each pattern
-                for pattern, message in pii_patterns:
-                    if re.search(pattern, string_value, re.IGNORECASE):
-                        if explain:
-                            violations.append(f"{message}: {string_value}")
-                        else:
-                            return False
+        for pattern in patterns:
+            if re.search(pattern, source, re.IGNORECASE):
+                logger.warning(f"Potential excessive memory usage")
+                return False
         
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
+        return True
     
-    def _check_universal_equity(self, source_code: str, bias_terms: Set[str] = None, 
-                               excluded_groups: Set[str] = None, explain: bool = False) -> Union[bool, tuple]:
-        """
-        Check that code doesn't contain biased or discriminatory language or logic.
-        
-        Args:
-            source_code: Code to check
-            bias_terms: Set of terms indicating bias
-            excluded_groups: Set of groups that should not be discriminated against
-            explain: Whether to return explanation
-            
-        Returns:
-            Boolean result or (result, explanation) tuple
-        """
-        if bias_terms is None:
-            bias_terms = self.parameters.get('bias_terms', set())
-        
-        if excluded_groups is None:
-            excluded_groups = self.parameters.get('excluded_groups', set())
-        
-        # Create regex patterns for bias terms
-        bias_patterns = [re.compile(r'\b' + re.escape(term) + r'\b', re.IGNORECASE) 
-                        for term in bias_terms]
-        
-        # Create regex patterns for excluded groups
-        group_patterns = [re.compile(r'\b' + re.escape(term) + r'\b', re.IGNORECASE) 
-                         for term in excluded_groups]
-        
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Check string literals for bias
-        violations = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Str) or (hasattr(ast, 'Constant') and 
-                                            isinstance(node, ast.Constant) and 
-                                            isinstance(node.value, str)):
-                
-                # Get the string value
-                string_value = node.s if hasattr(node, 's') else node.value
-                
-                # Check for bias terms
-                for pattern in bias_patterns:
-                    if pattern.search(string_value):
-                        if explain:
-                            violations.append(f"Biased term found: {string_value}")
-                        else:
-                            return False
-                
-                # Check for references to excluded groups in a possible discriminatory context
-                for pattern in group_patterns:
-                    if pattern.search(string_value):
-                        # Look for nearby bias terms to determine if it's potentially discriminatory
-                        for bias_pattern in bias_patterns:
-                            if bias_pattern.search(string_value):
-                                if explain:
-                                    violations.append(f"Potentially discriminatory content: {string_value}")
-                                else:
-                                    return False
-        
-        # Check variable names
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Name):
-                name = node.id
-                # Check for bias terms in variable names
-                for term in bias_terms:
-                    if term.lower() in name.lower():
-                        if explain:
-                            violations.append(f"Biased term in variable name: {name}")
-                        else:
-                            return False
-        
-        # Check comments
-        for node in ast.walk(tree):
-            for child in ast.iter_child_nodes(node):
-                if hasattr(child, 'lineno'):
-                    line_no = child.lineno
-                    if line_no <= len(source_code.splitlines()):
-                        line = source_code.splitlines()[line_no - 1]
-                        comment_start = line.find('#')
-                        if comment_start != -1:
-                            comment = line[comment_start + 1:].strip()
-                            # Check for bias terms in comments
-                            for pattern in bias_patterns:
-                                if pattern.search(comment):
-                                    if explain:
-                                        violations.append(f"Biased term in comment: {comment}")
-                                    else:
-                                        return False
-        
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
+    # === Gurbani-Inspired Ethical Boundaries ===
     
-    def _check_truthful_communication(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
+    def _check_universal_equity(self, source: str, **kwargs) -> bool:
         """
-        Check that code doesn't intentionally deceive or mislead.
+        Check for code patterns that might treat different inputs inequitably.
         
-        Args:
-            source_code: Code to check
-            explain: Whether to return explanation
-            
-        Returns:
-            Boolean result or (result, explanation) tuple
+        Inspired by the Gurbani principle of treating all equally.
         """
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        # Define deceptive patterns
-        deceptive_patterns = [
-            # Misleading variable names
-            (r'(is|has|should)_[a-z_]+\s*=\s*(False|0)', 
-             "Variable name suggests true but value is false"),
-            
-            # Deliberate confusion
-            (r'(True\s*==\s*False|False\s*==\s*True)', 
-             "Deliberately confusing boolean comparison"),
-            
-            # Misleading comments vs code
-            (r'#.*correct.*\n.*\breturn False\b', 
-             "Comment claims correctness but returns false"),
-            
-            # Overrides that silently ignore inputs
-            (r'def\s+[a-zA-Z_]+\([^)]*\):\s*[^#\n]*pass', 
-             "Function appears to do nothing without warning")
+        # Look for hardcoded biases, special cases for specific groups, etc.
+        patterns = [
+            r'\bif\s+.*\b(gender|race|ethnicity|nationality|religion)\b.*:',  # Simplistic check for demographic-based branching
+            r'bias',
+            r'blacklist',
+            r'whitelist',
         ]
         
-        # Check patterns in source code
-        violations = []
-        source_lines = source_code.splitlines()
-        for pattern, message in deceptive_patterns:
-            matches = re.finditer(pattern, source_code, re.MULTILINE)
-            for match in matches:
-                if explain:
-                    violations.append(f"{message}: {match.group(0)}")
-                else:
+        # This is a simplified check - a real implementation would need more sophisticated analysis
+        for pattern in patterns:
+            if re.search(pattern, source, re.IGNORECASE):
+                # Look for comments indicating ethical considerations
+                context = 10  # Lines of context to check
+                matches = re.finditer(pattern, source, re.IGNORECASE)
+                for match in matches:
+                    start_pos = match.start()
+                    # Find the start of the line containing this match
+                    line_start = source.rfind('\n', 0, start_pos) + 1
+                    # Find several lines before
+                    previous_lines = source[max(0, source.rfind('\n', 0, line_start - context)):line_start]
+                    
+                    # If there's a comment indicating ethical consideration, allow it
+                    if re.search(r'#.*\b(ethical|fairness|equity|equality)\b', previous_lines, re.IGNORECASE):
+                        continue
+                        
+                    logger.warning(f"Potential equity issue found: {match.group(0)}")
                     return False
         
-        # Look for intentionally confusing comments
-        clean_code = re.sub(r'#.*$', '', source_code, flags=re.MULTILINE)
-        has_comments = source_code != clean_code
-        if has_comments:
-            # Function with a docstring claiming one behavior but doing another
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    docstring = ast.get_docstring(node)
-                    if docstring:
-                        # Check if docstring claims to do one thing but return has contrary logic
-                        for docstring_word in ["increment", "add", "plus", "increase"]:
-                            if docstring_word in docstring.lower():
-                                # Look for decreasing operations in function body
-                                function_body = ast.unparse(node)
-                                if re.search(r'(decrement|subtract|minus|decrease)', function_body, re.IGNORECASE):
-                                    if explain:
-                                        violations.append(f"Function {node.name} claims to {docstring_word} but does the opposite")
-                                    else:
-                                        return False
-        
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
+        return True
     
-    def _check_humble_code(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
+    def _check_truthful_communication(self, source: str, **kwargs) -> bool:
         """
-        Check that code follows principles of simplicity and readability.
+        Check for code patterns that might lead to misleading outputs.
         
-        Args:
-            source_code: Code to check
-            explain: Whether to return explanation
-            
-        Returns:
-            Boolean result or (result, explanation) tuple
+        Inspired by the Gurbani principle of truthfulness (Sat Nam).
         """
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        violations = []
-        
-        # Check for overly complex list/dict comprehensions
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.ListComp, ast.DictComp, ast.SetComp)):
-                # Count the number of for clauses and if clauses
-                num_for = len([c for c in node.generators])
-                num_if = sum(len(gen.ifs) for gen in node.generators)
-                
-                if num_for > 2 or num_if > 2:
-                    if explain:
-                        violations.append(f"Overly complex comprehension with {num_for} for clauses and {num_if} if clauses")
-                    else:
-                        return False
-            
-            # Check for overly complex lambda functions
-            if isinstance(node, ast.Lambda):
-                lambda_source = ast.unparse(node)
-                if len(lambda_source) > 80:
-                    if explain:
-                        violations.append(f"Overly complex lambda function: {lambda_source[:50]}...")
-                    else:
-                        return False
-            
-            # Check for excessive nesting
-            if isinstance(node, (ast.If, ast.For, ast.While)):
-                max_depth = self._get_nesting_depth(node)
-                if max_depth > 4:  # More than 4 levels of nesting is considered excessive
-                    if explain:
-                        violations.append(f"Excessive nesting depth of {max_depth}")
-                    else:
-                        return False
-        
-        # Check for function complexity
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                # Approximate cyclomatic complexity by counting branches
-                complexity = 1  # Base complexity
-                for subnode in ast.walk(node):
-                    if isinstance(subnode, (ast.If, ast.For, ast.While, ast.And, ast.Or)):
-                        complexity += 1
-                
-                if complexity > 10:  # McCabe complexity threshold
-                    if explain:
-                        violations.append(f"Function {node.name} has high complexity score of {complexity}")
-                    else:
-                        return False
-                
-                # Check function length
-                function_body = ast.unparse(node)
-                num_lines = function_body.count('\n')
-                if num_lines > 50:  # More than 50 lines is considered too long
-                    if explain:
-                        violations.append(f"Function {node.name} is too long ({num_lines} lines)")
-                    else:
-                        return False
-        
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
-    
-    def _get_nesting_depth(self, node, current_depth=1):
-        """Helper method to calculate nesting depth"""
-        max_depth = current_depth
-        for child in ast.iter_child_nodes(node):
-            if isinstance(child, (ast.If, ast.For, ast.While)):
-                child_depth = self._get_nesting_depth(child, current_depth + 1)
-                max_depth = max(max_depth, child_depth)
-        return max_depth
-    
-    def _check_service_oriented(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
-        """
-        Check that code is designed with a service orientation rather than exploitation.
-        
-        Args:
-            source_code: Code to check
-            explain: Whether to return explanation
-            
-        Returns:
-            Boolean result or (result, explanation) tuple
-        """
-        # Parse the AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        violations = []
-        
-        # Check for function documentation
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                # Skip private methods (starting with _)
-                if node.name.startswith('_'):
-                    continue
-                    
-                # Check for docstring
-                docstring = ast.get_docstring(node)
-                if not docstring:
-                    if explain:
-                        violations.append(f"Function {node.name} lacks documentation")
-                    else:
-                        return False
-                
-                # Check parameter documentation
-                if docstring and node.args.args:
-                    # Check if all parameters are documented
-                    param_names = [arg.arg for arg in node.args.args if arg.arg != 'self']
-                    if param_names:
-                        # Simple heuristic: Check if each parameter name appears in the docstring
-                        for param in param_names:
-                            if param not in docstring:
-                                if explain:
-                                    violations.append(f"Parameter {param} of function {node.name} is not documented")
-                                else:
-                                    return False
-        
-        # Check for excessive resource consumption
-        resource_intensive_patterns = [
-            (r'while\s+True\s*:', "Infinite loop without clear exit condition"),
-            (r'for\s+\w+\s+in\s+range\s*\(\s*[0-9]+\s*\*\s*[0-9]+\s*\)', "Potentially large loop range")
+        # Look for deceptive patterns, misleading variable names, etc.
+        patterns = [
+            r'fake',
+            r'deceive',
+            r'trick',
+            r'mislead',
+            r'false.*report',
         ]
         
-        for pattern, message in resource_intensive_patterns:
-            matches = re.finditer(pattern, source_code, re.MULTILINE)
-            for match in matches:
-                # Check if there's a break or return within the loop
-                match_pos = match.start()
-                indentation = source_code[:match_pos].rfind("\n")
-                if indentation == -1:
-                    indentation = 0
-                else:
-                    indentation = match_pos - indentation - 1
-                
-                # Get the loop's content by finding all lines with greater indentation
-                loop_content = ""
-                current_pos = match_pos + len(match.group(0))
-                for line in source_code[current_pos:].split("\n"):
-                    if line.startswith(" " * (indentation + 4)) or line.startswith("\t" * (indentation // 4 + 1)):
-                        loop_content += line + "\n"
-                    elif line.strip() and not line.isspace():
-                        break
-                
-                # Check if there's an exit condition
-                if not re.search(r'(break|return|exit|sys\.exit)', loop_content):
-                    if explain:
-                        violations.append(f"{message}: {match.group(0)}")
-                    else:
-                        return False
+        for pattern in patterns:
+            if re.search(pattern, source, re.IGNORECASE):
+                logger.warning(f"Potential truthfulness issue found: {pattern}")
+                return False
         
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0
-    
-    def _check_harmony_with_environment(self, source_code: str, explain: bool = False) -> Union[bool, tuple]:
-        """
-        Check that code respects computational resources and doesn't needlessly waste them.
-        
-        Args:
-            source_code: Code to check
-            explain: Whether to return explanation
-            
-        Returns:
-            Boolean result or (result, explanation) tuple
-        """
-        # Parse the AST
+        # Check for error handling - code should handle and report errors truthfully
         try:
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            if explain:
-                return False, "Code contains syntax errors"
-            return False
-        
-        violations = []
-        
-        # Check for resource leaks
-        resource_patterns = [
-            # Check for file handles not closed
-            (ast.With, lambda node: not any(
-                isinstance(item.context_expr, ast.Call) and
-                isinstance(item.context_expr.func, ast.Name) and
-                item.context_expr.func.id == 'open'
-                for item in node.items
-            )),
-            
-            # Check for direct file operations without close
-            (ast.Assign, lambda node: (
-                isinstance(node.value, ast.Call) and
-                isinstance(node.value.func, ast.Name) and
-                node.value.func.id == 'open'
-            ))
-        ]
-        
-        # Track file handles that are opened
-        file_handles = []
-        
-        # Check for file operations
-        for node in ast.walk(tree):
-            # Check for 'open' calls without a 'with' context
-            if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call) and hasattr(node.value.func, 'id') and node.value.func.id == 'open':
-                # This is a file being opened directly
-                if len(node.targets) > 0 and isinstance(node.targets[0], ast.Name):
-                    file_handles.append(node.targets[0].id)
-        
-        # Now check if all file handles are properly closed
-        for handle in file_handles:
-            # Look for a close call on this handle
-            close_found = False
+            tree = ast.parse(source)
+            has_try = False
             for node in ast.walk(tree):
-                if (isinstance(node, ast.Call) and 
-                    isinstance(node.func, ast.Attribute) and 
-                    isinstance(node.func.value, ast.Name) and
-                    node.func.value.id == handle and 
-                    node.func.attr == 'close'):
-                    close_found = True
+                if isinstance(node, ast.Try):
+                    has_try = True
                     break
             
-            if not close_found:
-                if explain:
-                    violations.append(f"File handle {handle} is not explicitly closed")
-                else:
-                    return False
+            # If code has function definitions but no error handling, flag it
+            # This is a simplified heuristic
+            has_funcs = any(isinstance(node, ast.FunctionDef) for node in ast.walk(tree))
+            if has_funcs and not has_try and len(source.splitlines()) > 30:
+                logger.warning("Code lacks error handling for truthful communication")
+                return False
+                
+        except SyntaxError:
+            # If we can't parse the code, pass this check but log a warning
+            logger.warning("Syntax error while checking for truthful communication")
         
-        # Check for inefficient algorithms and data structures
-        algorithm_patterns = [
-            # Nested loops with direct array access (likely O(n²) complexity)
-            (r'for\s+\w+\s+in\s+.+:\s*\n\s+for\s+\w+\s+in\s+.+:\s*\n\s+for\s+\w+\s+in\s+.+:', 
-             "Triple nested loop detected (potentially O(n³) complexity)"),
+        return True
+    
+    def _check_humble_code(self, source: str, **kwargs) -> bool:
+        """
+        Check for code patterns that might indicate unnecessary complexity or "showing off."
+        
+        Inspired by the Gurbani principle of humility (Nimrata).
+        """
+        # Look for unnecessarily complex code, "clever tricks," etc.
+        # Calculate code complexity metrics
+        
+        # Check line length - consistently very long lines might indicate lack of readability
+        lines = source.splitlines()
+        very_long_lines = sum(1 for line in lines if len(line.strip()) > 100)
+        if lines and very_long_lines / len(lines) > 0.3:  # More than 30% are very long
+            logger.warning("Code has many excessively long lines, reducing readability")
+            return False
+        
+        # Check for nested list/dict/set comprehensions (often less readable)
+        if re.search(r'\[.*\bfor\b.*\bfor\b.*\]', source) or re.search(r'\{.*\bfor\b.*\bfor\b.*\}', source):
+            # Check if there are comments explaining the complex comprehensions
+            if not re.search(r'#.*comprehension', source, re.IGNORECASE):
+                logger.warning("Complex comprehensions without explanatory comments")
+                return False
+        
+        # Check for deep nesting of control structures
+        try:
+            tree = ast.parse(source)
             
-            # Excessive string concatenation in loops
-            (r'for\s+\w+\s+in\s+.+:\s*\n\s+.+\s*\+=\s*str\(', 
-             "String concatenation in a loop (consider using join() or a list)"),
-             
-            # Creation of large temporary lists
-            (r'(\[\s*[a-zA-Z0-9_]+\s+for\s+[a-zA-Z0-9_]+\s+in\s+range\s*\(\s*10\d{3,}\s*\)\s*\])',
-             "Creation of a very large temporary list")
+            class NestingVisitor(ast.NodeVisitor):
+                def __init__(self):
+                    self.max_nesting = 0
+                    self.current_nesting = 0
+                
+                def generic_visit(self, node):
+                    if isinstance(node, (ast.For, ast.While, ast.If, ast.With, ast.Try)):
+                        self.current_nesting += 1
+                        if self.current_nesting > self.max_nesting:
+                            self.max_nesting = self.current_nesting
+                        super().generic_visit(node)
+                        self.current_nesting -= 1
+                    else:
+                        super().generic_visit(node)
+            
+            visitor = NestingVisitor()
+            visitor.visit(tree)
+            
+            if visitor.max_nesting > 5:  # Arbitrary threshold
+                logger.warning(f"Code has deep nesting level: {visitor.max_nesting}")
+                return False
+                
+        except SyntaxError:
+            # If we can't parse the code, pass this check but log a warning
+            logger.warning("Syntax error while checking for humble code")
+        
+        return True
+    
+    def _check_service_oriented(self, source: str, **kwargs) -> bool:
+        """
+        Check if code appears to be service-oriented rather than self-serving.
+        
+        Inspired by the Gurbani principle of selfless service (Seva).
+        """
+        # Look for proper documentation, user-focused error messages, etc.
+        
+        # Check for docstrings
+        try:
+            tree = ast.parse(source)
+            
+            # Check top-level module docstring
+            has_module_docstring = False
+            if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(tree.body[0].value, ast.Str):
+                has_module_docstring = True
+            
+            # Check function docstrings
+            functions = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+            functions_with_docstrings = 0
+            for func in functions:
+                if func.body and isinstance(func.body[0], ast.Expr) and isinstance(func.body[0].value, ast.Str):
+                    functions_with_docstrings += 1
+            
+            # If there are functions but less than half have docstrings, flag it
+            if functions and functions_with_docstrings / len(functions) < 0.5:
+                logger.warning("Less than half of functions have docstrings")
+                return False
+            
+            # If it's a significant module with no module docstring, flag it
+            if len(tree.body) > 5 and not has_module_docstring:
+                logger.warning("Significant module with no top-level docstring")
+                return False
+                
+        except SyntaxError:
+            # If we can't parse the code, pass this check but log a warning
+            logger.warning("Syntax error while checking for service orientation")
+        
+        return True
+    
+    def _check_harmony_with_environment(self, source: str, **kwargs) -> bool:
+        """
+        Check if code is resource-efficient and environmentally conscious.
+        
+        Inspired by the Gurbani principle of harmony with nature.
+        """
+        # Look for resource-inefficient patterns, lack of cleanup, etc.
+        
+        # Check for resource cleanup in file operations, etc.
+        patterns = [
+            # File operations without context managers
+            r'open\([^)]*\)[^:]*[^\n]*((?!with|close).)*$',
         ]
         
-        for pattern, message in algorithm_patterns:
-            matches = re.finditer(pattern, source_code, re.MULTILINE)
-            for match in matches:
-                if explain:
-                    violations.append(f"{message}: {match.group(0)}")
-                else:
-                    return False
+        for pattern in patterns:
+            if re.search(pattern, source, re.MULTILINE | re.DOTALL):
+                logger.warning("Resource usage without proper cleanup detected")
+                return False
         
-        if explain:
-            return len(violations) == 0, "\n".join(violations)
-        return len(violations) == 0 
+        # Check for efficient code patterns vs. inefficient ones
+        inefficient_patterns = [
+            r'\.append\s*\([^)]*\)\s*in\s+range',  # Building lists with append in loops
+            r'\+\=\s*"[^"]*"\s*in\s+range',  # String concatenation in loops
+        ]
+        
+        for pattern in inefficient_patterns:
+            if re.search(pattern, source):
+                logger.warning(f"Inefficient code pattern detected: {pattern}")
+                return False
+        
+        return True
+    
+    def __str__(self) -> str:
+        """Return a string representation of the enforcer."""
+        active = self.get_active_boundaries()
+        return f"EthicalBoundaryEnforcer({len(active)} active boundaries: {', '.join(active)})"

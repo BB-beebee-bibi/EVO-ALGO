@@ -4,3 +4,16 @@ Cursor-0.49.6-x86_64.AppImage
 # Ignore common system files
 .DS_Store
 Thumbs.db 
+
+# Ignore output directories with their own git repos
+outputs/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+trisolaris/__pycache__/
+trisolaris/*/__pycache__/
+
+# Ignore scan result files
+drive_scan_*.json 
