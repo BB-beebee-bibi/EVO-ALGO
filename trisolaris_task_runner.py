@@ -23,7 +23,7 @@ from trisolaris.managers.repository import GenomeRepository
 from trisolaris.managers.diversity import DiversityGuardian
 from trisolaris.managers.island import IslandEcosystemManager
 from trisolaris.utils.paths import create_timestamped_output_dir, create_generation_dir
-from trisolaris.tasks import TaskInterface, DriveScannerTask
+from trisolaris.tasks import TaskInterface, DriveScannerTask, NetworkScannerTask, BluetoothScannerTask
 
 # Configure logging
 logging.basicConfig(
@@ -38,7 +38,9 @@ logger = logging.getLogger(__name__)
 
 # Dictionary mapping task names to their implementing classes
 TASK_REGISTRY = {
-    "drive_scanner": DriveScannerTask
+    "drive_scanner": DriveScannerTask,
+    "network_scanner": NetworkScannerTask,
+    "bluetooth_scanner": BluetoothScannerTask
 }
 
 def setup_ethical_filter(task: TaskInterface, level: str, output_dir: str) -> Optional[EthicalBoundaryEnforcer]:
