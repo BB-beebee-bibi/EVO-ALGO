@@ -1,0 +1,6 @@
+# Ignore large files
+Cursor-0.49.6-x86_64.AppImage
+
+# Ignore common system files
+.DS_Store
+Thumbs.db 
