@@ -264,7 +264,8 @@ class EthicalBoundaryEnforcer:
             allowed_imports: Set of allowed import module names
         """
         if allowed_imports is None:
-            allowed_imports = set()
+            # Default allowed imports from standard library
+            allowed_imports = {'typing', 'collections', 'datetime', 'math', 'random', 're', 'time', 'socket', 'json', 'sys', 'os'}
         
         try:
             tree = ast.parse(source)

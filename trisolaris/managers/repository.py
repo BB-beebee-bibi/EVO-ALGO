@@ -489,16 +489,16 @@ class GenomeRepository:
         # Make sure metadata is up to date
         self._load_metadata()
         
-        # Count generations and solutions
-        generations = len(self.metadata['generations'])
-        total_solutions = sum(len(solutions) for solutions in self.metadata['generations'].values())
+        # Count generations and solutions - handle missing keys
+        generations = len(self.metadata.get('generations', {}))
+        total_solutions = sum(len(solutions) for solutions in self.metadata.get('generations', {}).values())
         
         # Get best solution info
         best_info = self.metadata.get('overall_best', {})
         
         return {
             'run_id': self.run_id,
-            'created_at': self.metadata['created_at'],
+            'created_at': self.metadata.get('created_at', datetime.now().isoformat()),
             'generations': generations,
             'total_solutions': total_solutions,
             'best_solution': {

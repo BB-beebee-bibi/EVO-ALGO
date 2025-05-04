@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 '''
-Network Scanner
+Enhanced Network Scanner
 
-A program that scans local networks, identifies all connected devices including IoT devices,
-and provides detailed information about them.
+A program that scans local networks, identifies all connected devices including IoT devices
+like Nest thermostats, and provides detailed information about them.
 '''
 
 import os
@@ -14,7 +14,9 @@ import json
 import time
 import datetime
 import re
-from typing import Dict, List, Any, Optional
+import concurrent.futures
+import ipaddress
+from typing import Dict, List, Any, Optional, Set
 
 def get_local_ip() -> str:
     '''
@@ -358,4 +360,4 @@ def main():
     print(f"\nScan complete! Full results saved to {filename}")
 
 if __name__ == "__main__":
-    main() 
+    main()

@@ -493,10 +493,12 @@ if __name__ == "__main__":
         weights = {
             "syntax_valid": 0.1,
             "runtime_successful": 0.1,
-            "network_detection": 0.15,
-            "device_discovery": 0.15,
-            "port_scanning": 0.15,
-            "device_identification": 0.15,
+            "network_detection": 0.1,
+            "device_discovery": 0.1,
+            "port_scanning": 0.1,
+            "device_identification": 0.1,
+            "nest_detection": 0.15,  # Higher weight for Nest detection
+            "parallel_scanning": 0.1,
             "error_handling": 0.1,
             "resource_efficiency": 0.05,
             "user_interface": 0.05
@@ -524,9 +526,11 @@ if __name__ == "__main__":
             "device_discovery": 0,
             "port_scanning": 0,
             "device_identification": 0,
+            "nest_detection": 0,  # New criterion for Nest device detection
             "error_handling": 0,
             "resource_efficiency": 0,
-            "user_interface": 0
+            "user_interface": 0,
+            "parallel_scanning": 0  # New criterion for optimized scanning
         }
         
         # Check for network detection functionality
@@ -545,10 +549,34 @@ if __name__ == "__main__":
             r'scan_network',
             r'discover',
             r'arp',
-            r'nmap'
+            r'nmap',
+            r'scapy',
+            r'socket\.socket',
+            r'concurrent\.futures',  # For parallel scanning
+            r'threading',           # For parallel scanning
+            r'multiprocessing',     # For parallel scanning
+            r'avahi',              # mDNS service discovery
+            r'zeroconf',           # mDNS service discovery
+            r'mdns'                # Multicast DNS
         ]
-        discovery_score = sum(0.2 for pattern in device_discovery_patterns if re.search(pattern, code, re.IGNORECASE))
+        discovery_score = sum(0.12 for pattern in device_discovery_patterns if re.search(pattern, code, re.IGNORECASE))
         results["device_discovery"] = min(1.0, discovery_score)
+        
+        # Check for parallel scanning capabilities
+        parallel_scanning_patterns = [
+            r'concurrent\.futures',
+            r'ThreadPoolExecutor',
+            r'ProcessPoolExecutor',
+            r'threading\.Thread',
+            r'multiprocessing\.Process',
+            r'async\s+def',
+            r'await',
+            r'asyncio',
+            r'parallel',
+            r'pool\.map'
+        ]
+        parallel_score = sum(0.2 for pattern in parallel_scanning_patterns if re.search(pattern, code, re.IGNORECASE))
+        results["parallel_scanning"] = min(1.0, parallel_score)
         
         # Check for port scanning functionality
         port_scanning_patterns = [
@@ -556,9 +584,17 @@ if __name__ == "__main__":
             r'socket\.connect',
             r'connect_ex',
             r'port.*open',
-            r'service.*port'
+            r'service.*port',
+            r'common_ports',
+            r'80\s*[:,]',  # HTTP port
+            r'443\s*[:,]',  # HTTPS port
+            r'8080\s*[:,]',  # Alternative HTTP port
+            r'1883\s*[:,]',  # MQTT (IoT devices)
+            r'5353\s*[:,]',  # mDNS
+            r'8443\s*[:,]',  # Nest web interface port
+            r'9543\s*[:,]'   # Nest specific port
         ]
-        port_score = sum(0.2 for pattern in port_scanning_patterns if re.search(pattern, code, re.IGNORECASE))
+        port_score = sum(0.12 for pattern in port_scanning_patterns if re.search(pattern, code, re.IGNORECASE))
         results["port_scanning"] = min(1.0, port_score)
         
         # Check for device identification
@@ -566,13 +602,40 @@ if __name__ == "__main__":
             r'identify_device',
             r'device_type',
             r'classify',
+            r'IoT',
+            r'mac_address',
+            r'vendor',
+            r'manufacturer',
+            r'fingerprint',
+            r'device_signature',
+            r'os_detection'
+        ]
+        identification_score = sum(0.12 for pattern in identification_patterns if re.search(pattern, code, re.IGNORECASE))
+        results["device_identification"] = min(1.0, identification_score)
+        
+        # Specific check for Nest device detection capabilities
+        nest_patterns = [
             r'nest',
             r'thermostat',
-            r'IoT',
-            r'mac_address'
+            r'google.*home',
+            r'google_device',
+            r'B0F',  # Nest MAC prefix
+            r'thermo',
+            r'temperature.*control',
+            r'smart.*home',
+            r'avahi',  # mDNS service discovery
+            r'zeroconf',  # mDNS service discovery
+            r'bonjour',  # mDNS service discovery
+            r'mdns',  # Multicast DNS
+            r'ssdp',  # Simple Service Discovery Protocol
+            r'8443',  # Nest web interface port
+            r'9543'   # Nest specific port
         ]
-        identification_score = sum(0.15 for pattern in identification_patterns if re.search(pattern, code, re.IGNORECASE))
-        results["device_identification"] = min(1.0, identification_score)
+        nest_score = sum(0.12 for pattern in nest_patterns if re.search(pattern, code, re.IGNORECASE))
+        # Bonus for combining multiple Nest detection methods
+        if nest_score > 0.5:
+            nest_score += 0.3
+        results["nest_detection"] = min(1.0, nest_score)
         
         # Check for error handling
         error_handling_patterns = [
@@ -641,7 +704,8 @@ if __name__ == "__main__":
         """
         return [
             "os", "sys", "socket", "subprocess", "json", "datetime", "re", 
-            "time", "logging", "collections", "ipaddress", "threading", "concurrent"
+            "time", "logging", "collections", "ipaddress", "threading", "concurrent",
+            "typing"
         ]
     
     def get_evolution_params(self) -> Dict[str, Any]:
@@ -652,10 +716,13 @@ if __name__ == "__main__":
             A dictionary of parameters for the evolution process
         """
         return {
-            "population_size": 20,
-            "num_generations": 15,
-            "mutation_rate": 0.1,
-            "crossover_rate": 0.7
+            "population_size": 40,      # Increased from 20 to 40
+            "num_generations": 20,      # Increased from 15 to 20
+            "mutation_rate": 0.2,       # Increased from 0.1 to 0.2 for more variety
+            "crossover_rate": 0.7,
+            "use_islands": True,        # Use island model for better diversity
+            "islands": 4,               # Use 4 islands
+            "migration_interval": 3     # Migrate every 3 generations
         }
     
     def post_process(self, source_code: str) -> str:
@@ -682,4 +749,4 @@ if __name__ == "__main__":
             f"#!/usr/bin/env python3\n# Generated by TRISOLARIS on {timestamp}\n"
         )
         
-        return source_code 
+        return source_code
