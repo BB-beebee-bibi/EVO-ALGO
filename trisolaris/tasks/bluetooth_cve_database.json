@@ -1,0 +1,123 @@
+{
+  "CVE-2017-0785": {
+    "name": "BlueBorne SDP Information Leak",
+    "description": "The BlueBorne vulnerability in SDP servers allows an attacker to get information about memory layout.",
+    "affected_versions": ["Bluetooth 2.1 - 5.0"],
+    "severity": "HIGH",
+    "exploit_complexity": "LOW",
+    "patch_available": true,
+    "recommendation": "Update device firmware",
+    "detection_methods": ["SDP service probe"],
+    "affected_devices": ["Android", "Linux", "Windows", "iOS before 10"]
+  },
+  "CVE-2017-0781": {
+    "name": "BlueBorne RCE Vulnerability",
+    "description": "The BlueBorne vulnerability allows remote code execution over the air.",
+    "affected_versions": ["Android 4.4.4 - 7.1.2", "All unpatched Linux devices with BlueZ"],
+    "severity": "CRITICAL",
+    "exploit_complexity": "MEDIUM",
+    "patch_available": true,
+    "recommendation": "Update device firmware immediately",
+    "detection_methods": ["L2CAP payload test"],
+    "affected_devices": ["Android", "Linux"]
+  },
+  "CVE-2018-5383": {
+    "name": "Bluetooth Pairing Key Validation",
+    "description": "Vulnerability in Bluetooth Secure Simple Pairing and LE Secure Connections allows man-in-the-middle attacks.",
+    "affected_versions": ["All Bluetooth BR/EDR prior to 5.1"],
+    "severity": "HIGH",
+    "exploit_complexity": "MEDIUM", 
+    "patch_available": true,
+    "recommendation": "Update to Bluetooth 5.1+ if possible",
+    "detection_methods": ["Pairing observation"],
+    "affected_devices": ["All Bluetooth devices prior to 5.1"]
+  },
+  "CVE-2019-9506": {
+    "name": "KNOB Attack",
+    "description": "Key Negotiation of Bluetooth (KNOB) attack allows forcing weaker encryption keys.",
+    "affected_versions": ["All Bluetooth BR/EDR"],
+    "severity": "HIGH",
+    "exploit_complexity": "MEDIUM",
+    "patch_available": true,
+    "recommendation": "Apply vendor security patches",
+    "detection_methods": ["Encryption negotiation test"],
+    "affected_devices": ["All Bluetooth devices"]
+  },
+  "CVE-2019-2225": {
+    "name": "BlueFrag",
+    "description": "A vulnerability in Bluetooth BNEP services allows remote code execution.",
+    "affected_versions": ["Android 8.0 - 9.0"],
+    "severity": "CRITICAL",
+    "exploit_complexity": "MEDIUM",
+    "patch_available": true,
+    "recommendation": "Update to Android 10+ or apply security patches",
+    "detection_methods": ["BNEP service probe"],
+    "affected_devices": ["Android devices"]
+  },
+  "CVE-2020-0022": {
+    "name": "BlueFrag 2",
+    "description": "Heap overflow in Bluetooth implementation allows remote code execution.",
+    "affected_versions": ["Android 8.0 - 9.0"],
+    "severity": "CRITICAL",
+    "exploit_complexity": "MEDIUM",
+    "patch_available": true,
+    "recommendation": "Update to Android 10+ or apply security patches",
+    "detection_methods": ["System version check"],
+    "affected_devices": ["Android devices"]
+  },
+  "CVE-2020-10135": {
+    "name": "BIAS (Bluetooth Impersonation AttackS)",
+    "description": "Allows an attacker to impersonate previously paired devices.",
+    "affected_versions": ["All Bluetooth BR/EDR"],
+    "severity": "HIGH",
+    "exploit_complexity": "HIGH",
+    "patch_available": true,
+    "recommendation": "Apply vendor security patches",
+    "detection_methods": ["Legacy authentication test"],
+    "affected_devices": ["All Bluetooth devices"]
+  },
+  "DEFAULT_PIN": {
+    "name": "Default PIN",
+    "description": "Device uses a default PIN code (like 0000, 1234) which is easily guessable.",
+    "affected_versions": ["All"],
+    "severity": "HIGH",
+    "exploit_complexity": "LOW",
+    "patch_available": true,
+    "recommendation": "Change default PIN code",
+    "detection_methods": ["Default PIN attempt"],
+    "affected_devices": ["All Bluetooth devices with PIN authentication"]
+  },
+  "NO_SECURE_CONNECTIONS": {
+    "name": "No Secure Connections Support",
+    "description": "Device does not support Secure Connections mode introduced in Bluetooth 4.2.",
+    "affected_versions": ["Pre-4.2 Bluetooth"],
+    "severity": "MEDIUM",
+    "exploit_complexity": "MEDIUM",
+    "patch_available": false,
+    "recommendation": "Replace with device supporting Bluetooth 4.2+ with Secure Connections",
+    "detection_methods": ["Feature detection"],
+    "affected_devices": ["Older Bluetooth devices"]
+  },
+  "PLAINTEXT_DATA": {
+    "name": "Plaintext Data Transmission",
+    "description": "Device transmits sensitive data without encryption.",
+    "affected_versions": ["All"],
+    "severity": "HIGH",
+    "exploit_complexity": "LOW",
+    "patch_available": false,
+    "recommendation": "Replace with device that implements encryption",
+    "detection_methods": ["Traffic analysis"],
+    "affected_devices": ["Various IoT devices, especially older models"]
+  },
+  "OVERFLOW_MAC_MODEL": {
+    "name": "MAC Address Model Overflow",
+    "description": "Buffer overflow in handling of model information during device discovery.",
+    "affected_versions": ["Various device models"],
+    "severity": "HIGH",
+    "exploit_complexity": "MEDIUM",
+    "patch_available": false, 
+    "recommendation": "Keep device out of range of untrusted Bluetooth devices",
+    "detection_methods": ["Model information probe"],
+    "affected_devices": ["Various smart locks including some LATCH models"]
+  }
+} 

@@ -93,10 +93,12 @@ To create a new task for TRISOLARIS:
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.8+ (required for modern AST handling with ast.Constant)
 - NumPy
 - psutil (optional, for resource monitoring)
 - Git (optional, for version control)
+
+> **Note:** TRISOLARIS now requires Python 3.8 or newer due to its use of modern AST handling. The framework uses `ast.Constant` for all literal values and does not support older Python versions where deprecated AST nodes (ast.Num, ast.Str, ast.NameConstant) were used.
 
 ## Design Principles
 

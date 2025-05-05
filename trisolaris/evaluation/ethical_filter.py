@@ -494,15 +494,19 @@ class EthicalBoundaryEnforcer:
             
             # Check top-level module docstring
             has_module_docstring = False
-            if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(tree.body[0].value, ast.Str):
-                has_module_docstring = True
+            if tree.body and isinstance(tree.body[0], ast.Expr):
+                # Use modern ast.Constant for docstring detection
+                if isinstance(tree.body[0].value, ast.Constant) and isinstance(tree.body[0].value.value, str):
+                    has_module_docstring = True
             
             # Check function docstrings
             functions = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
             functions_with_docstrings = 0
             for func in functions:
-                if func.body and isinstance(func.body[0], ast.Expr) and isinstance(func.body[0].value, ast.Str):
-                    functions_with_docstrings += 1
+                if func.body and isinstance(func.body[0], ast.Expr):
+                    # Use modern ast.Constant for docstring detection
+                    if isinstance(func.body[0].value, ast.Constant) and isinstance(func.body[0].value.value, str):
+                        functions_with_docstrings += 1
             
             # If there are functions but less than half have docstrings, flag it
             if functions and functions_with_docstrings / len(functions) < 0.5:

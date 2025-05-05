@@ -729,8 +729,10 @@ class FitnessEvaluator:
                             if isinstance(subnode.value, ast.Call) and hasattr(subnode.value.func, 'id'):
                                 if subnode.value.func.id in ['Exception', 'ValueError', 'RuntimeError']:
                                     # Check if custom error message is provided
-                                    if subnode.value.args and isinstance(subnode.value.args[0], ast.Str):
-                                        error_handling_score += 0.5
+                                    if subnode.value.args:
+                                        # Use modern ast.Constant for error message detection
+                                        if isinstance(subnode.value.args[0], ast.Constant) and isinstance(subnode.value.args[0].value, str):
+                                            error_handling_score += 0.5
         
         # Add error handling score (max 0.1)
         if try_count > 0:
