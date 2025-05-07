@@ -8,6 +8,7 @@ A simple CLI to evolve code using the Trisolaris framework, with basic safety gu
 import argparse
 import os
 import logging
+import platform
 from typing import Optional, List
 from trisolaris.core import EvolutionEngine, CodeGenome
 from trisolaris.evaluation import FitnessEvaluator, EthicalBoundaryEnforcer
@@ -40,6 +41,31 @@ def setup_basic_safety_filter(output_dir: str) -> EthicalBoundaryEnforcer:
     
     return enforcer
 
+def setup_usb_scan_filter(output_dir: str) -> EthicalBoundaryEnforcer:
+    """Create a safety filter that allows USB drive operations but prevents other destructive operations."""
+    enforcer = EthicalBoundaryEnforcer()
+    
+    # Safety-first boundaries
+    enforcer.add_boundary("no_eval_exec")
+    
+    # Allow specific system calls for USB scanning (we need os.popen to run wmic)
+    # enforcer.add_boundary("no_system_calls")  # Commented out to allow wmic calls
+    
+    # Resource constraints
+    enforcer.add_boundary("max_execution_time", max_execution_time=5.0)  # 5 seconds max for USB ops
+    enforcer.add_boundary("max_memory_usage", max_memory_usage=200)      # 200MB max
+    
+    # Allow controlled imports specifically needed for USB scanning
+    enforcer.add_boundary("no_imports", allowed_imports={
+        'os', 'sys', 'time', 'random', 'math', 'json', 
+        'datetime', 'collections', 're', 'logging', 'platform'
+    })
+    
+    # We need to allow file operations for USB scanning
+    # enforcer.add_boundary("no_file_operations")  # Commented out to allow file operations
+    
+    return enforcer
+
 def setup_full_ethics_filter(output_dir: str) -> EthicalBoundaryEnforcer:
     """Create a comprehensive ethical filter with all boundaries active."""
     enforcer = setup_basic_safety_filter(output_dir)
@@ -53,9 +79,22 @@ def setup_full_ethics_filter(output_dir: str) -> EthicalBoundaryEnforcer:
     
     return enforcer
 
-def load_initial_genomes(input_dir: str) -> List[CodeGenome]:
+def load_initial_genomes(input_dir: str, task: str = "general") -> List[CodeGenome]:
     """Load initial genomes from Python files in the input directory."""
     genomes = []
+    
+    # For USB scanner task, use our template
+    if task == "usb_scanner":
+        template_path = os.path.join(input_dir, "guidance", "usb_scanner_template.py")
+        if os.path.exists(template_path):
+            logger.info(f"Using USB scanner template from {template_path}")
+            try:
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    source = f.read()
+                genomes.append(CodeGenome.from_source(source))
+                return genomes
+            except Exception as e:
+                logger.warning(f"Could not load USB scanner template: {e}")
     
     # Start with a directory-based genome
     try:
@@ -83,6 +122,42 @@ def load_initial_genomes(input_dir: str) -> List[CodeGenome]:
         genomes.append(CodeGenome())
     
     return genomes
+
+def add_usb_scan_test_cases(evaluator: FitnessEvaluator):
+    """Add test cases specifically for evaluating USB scanning functionality."""
+    
+    # Test case 1: Finding USB drives
+    evaluator.add_test_case(
+        input_data={},  # No input needed
+        expected_output=["E"],  # Expect at least drive E to be found
+        weight=0.3,
+        name="find_usb_drives",
+        custom_validator=lambda actual, expected: (
+            isinstance(actual, list) and any(drive in expected for drive in actual)
+        ) if isinstance(actual, list) else False
+    )
+    
+    # Test case 2: Get drive info for drive E
+    evaluator.add_test_case(
+        input_data={"drive_letter": "E"},
+        expected_output={"path": "E"},  # Just check that the path is returned correctly
+        weight=0.3,
+        name="get_drive_info",
+        custom_validator=lambda actual, expected: (
+            isinstance(actual, dict) and actual.get("path") == expected["path"]
+        ) if isinstance(actual, dict) else False
+    )
+    
+    # Test case 3: Scan directory structure
+    evaluator.add_test_case(
+        input_data={"dir_path": "E:"},
+        expected_output={"type": "directory"},  # Just check that it returns directory info
+        weight=0.4,
+        name="scan_directory",
+        custom_validator=lambda actual, expected: (
+            isinstance(actual, dict) and actual.get("type") == expected["type"]
+        ) if isinstance(actual, dict) else False
+    )
 
 def main():
     parser = argparse.ArgumentParser(
@@ -123,14 +198,20 @@ def main():
     )
     parser.add_argument(
         "--ethics-level", "-e",
-        choices=["none", "basic", "full"],
+        choices=["none", "basic", "full", "usb"],
         default="basic",
-        help="Ethical filter level (none, basic, full) (default: basic)"
+        help="Ethical filter level (none, basic, full, usb) (default: basic)"
     )
     parser.add_argument(
         "--save-all-generations",
         action="store_true",
         help="Save best solution from each generation"
+    )
+    parser.add_argument(
+        "--task",
+        choices=["general", "usb_scanner"],
+        default="general",
+        help="Specific task to evolve (default: general)"
     )
     args = parser.parse_args()
 
@@ -138,7 +219,7 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
     
     # 1) Load initial genomes
-    initial_genomes = load_initial_genomes(args.input_dir)
+    initial_genomes = load_initial_genomes(args.input_dir, args.task)
     if not initial_genomes:
         logger.error(f"Could not load any valid code from {args.input_dir}")
         return
@@ -149,11 +230,18 @@ def main():
         ethical_filter = setup_basic_safety_filter(args.output_dir)
     elif args.ethics_level == "full":
         ethical_filter = setup_full_ethics_filter(args.output_dir)
+    elif args.ethics_level == "usb":
+        ethical_filter = setup_usb_scan_filter(args.output_dir)
     
     # 3) Build the fitness evaluator
     evaluator = FitnessEvaluator(ethical_filter=ethical_filter)
     
-    # 4) Configure weights for objectives if ethics is enabled
+    # 4) Add task-specific test cases if needed
+    if args.task == "usb_scanner":
+        add_usb_scan_test_cases(evaluator)
+        logger.info("Added USB scanner test cases")
+    
+    # 5) Configure weights for objectives if ethics is enabled
     if args.ethics_level == "full":
         evaluator.set_weights(
             alignment=0.6,      # Stronger weight on ethical alignment
@@ -167,7 +255,7 @@ def main():
             efficiency=0.3      # Efficiency is secondary concern
         )
     
-    # 5) Setup the evolution engine
+    # 6) Setup the evolution engine
     engine = EvolutionEngine(
         population_size=args.pop_size,
         evaluator=evaluator,
@@ -182,9 +270,10 @@ def main():
     while len(engine.population) < args.pop_size:
         engine.population.append(CodeGenome())
     
-    # 6) Run the evolution
+    # 7) Run the evolution
     logger.info(f"Starting evolution with population size {args.pop_size} for {args.gens} generations")
     logger.info(f"Ethics level: {args.ethics_level}")
+    logger.info(f"Task: {args.task}")
     
     # Track generations
     for gen in range(args.gens):
@@ -206,7 +295,7 @@ def main():
             offspring = engine.create_offspring(parents)
             engine.population = engine.select_survivors(offspring)
     
-    # 7) Save the final best solution
+    # 8) Save the final best solution
     best = engine.get_best_solution()
     if best:
         best_path = os.path.join(args.output_dir, "best.py")

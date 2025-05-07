@@ -110,7 +110,7 @@ class FitnessEvaluator:
         if total > 0:
             self.weights = {k: v / total for k, v in self.weights.items()}
     
-    def add_test_case(self, input_data, expected_output, weight=1.0, name=None):
+    def add_test_case(self, input_data, expected_output, weight=1.0, name=None, custom_validator=None):
         """
         Add a test case for functional evaluation.
         
@@ -119,12 +119,14 @@ class FitnessEvaluator:
             expected_output: Expected output for the test case
             weight: Relative importance of this test case
             name: Optional name for the test case
+            custom_validator: Optional custom validation function that takes (actual, expected) and returns bool
         """
         test_case = {
             'input': input_data,
             'expected': expected_output,
             'weight': weight,
-            'name': name or f"Test case {len(self.test_cases) + 1}"
+            'name': name or f"Test case {len(self.test_cases) + 1}",
+            'custom_validator': custom_validator
         }
         self.test_cases.append(test_case)
     
@@ -195,10 +197,27 @@ class FitnessEvaluator:
         # Check ethical boundaries if filter is available
         if self.ethical_filter and not self.ethical_filter.check(genome):
             return float('-inf')  # Automatic disqualification
+            
+        # Get source code and parse AST once if needed by alignment measures
+        source_code = None
+        tree = None
+        needs_ast_for_alignment = any('tree' in measure['func'].__code__.co_varnames 
+                                    for measure in self.alignment_measures)
         
+        if needs_ast_for_alignment:
+            if hasattr(genome, 'to_source'):
+                source_code = genome.to_source()
+            else:
+                source_code = str(genome)
+            try:
+                tree = ast.parse(source_code)
+            except SyntaxError as e:
+                logger.warning(f"Syntax error in genome, alignment checks using AST will fail: {e}")
+                # Allow evaluation to continue, but AST-based checks will score 0
+
         # Evaluate each objective
         functionality_score = self._evaluate_functionality(genome)
-        alignment_score = self._evaluate_alignment(genome)
+        alignment_score = self._evaluate_alignment(genome, source_code, tree)
         efficiency_score = self._evaluate_efficiency(genome)
         
         # Combine scores using weights
@@ -229,10 +248,14 @@ class FitnessEvaluator:
             return 0.5  # Neutral score if no test cases are defined
         
         # Get executable function from genome
+        exec_func = None
         try:
             exec_func = self._get_executable_function(genome)
             if exec_func is None:
-                return 0.0
+                 # Try to get the main function if no other function found
+                exec_func = self._get_executable_function(genome, function_name='main')
+                if exec_func is None:
+                    return 0.0 # Cannot execute
         except Exception as e:
             logger.debug(f"Error getting executable function: {str(e)}")
             return 0.0
@@ -241,15 +264,27 @@ class FitnessEvaluator:
         total_weight = sum(tc['weight'] for tc in self.test_cases)
         weighted_score = 0.0
         
-        for tc in self.test_cases:
+        for i, tc in enumerate(self.test_cases):
             try:
+                # Store current test case index for custom validation
+                self._current_test_case_index = i
+                
                 # Run the test case
                 if isinstance(tc['input'], dict):
                     actual_output = exec_func(**tc['input'])
                 elif isinstance(tc['input'], (list, tuple)):
                     actual_output = exec_func(*tc['input'])
                 else:
-                    actual_output = exec_func(tc['input'])
+                    # Handle case where function takes no arguments but input is provided
+                    # Or function takes args but input is single value not in list/dict
+                    try:
+                        sig = inspect.signature(exec_func)
+                        if not sig.parameters:
+                             actual_output = exec_func()
+                        else:
+                             actual_output = exec_func(tc['input'])
+                    except ValueError: # Handle cases like builtins with no signature
+                         actual_output = exec_func(tc['input']) 
                 
                 # Check the result
                 test_passed = self._compare_outputs(actual_output, tc['expected'])
@@ -261,15 +296,21 @@ class FitnessEvaluator:
                 # Test case failed due to exception
                 weighted_score += 0.0
         
+        # Clean up the current test case index
+        if hasattr(self, '_current_test_case_index'):
+            delattr(self, '_current_test_case_index')
+        
         # Normalize score
         return weighted_score / total_weight if total_weight > 0 else 0.0
     
-    def _evaluate_alignment(self, genome) -> float:
+    def _evaluate_alignment(self, genome, source_code: Optional[str] = None, tree: Optional[ast.AST] = None) -> float:
         """
         Evaluate alignment with principles.
         
         Args:
             genome: The genome to evaluate
+            source_code: Optional pre-fetched source code
+            tree: Optional pre-parsed AST
             
         Returns:
             Alignment score (0-1)
@@ -281,10 +322,43 @@ class FitnessEvaluator:
         total_weight = sum(measure['weight'] for measure in self.alignment_measures)
         weighted_score = 0.0
         
+        # Get source/AST if not provided (only if needed)
+        source_needed = any('source_code' in measure['func'].__code__.co_varnames 
+                           for measure in self.alignment_measures)
+        ast_needed = any('tree' in measure['func'].__code__.co_varnames 
+                        for measure in self.alignment_measures)
+
+        if source_code is None and (source_needed or ast_needed):
+            if hasattr(genome, 'to_source'):
+                source_code = genome.to_source()
+            else:
+                source_code = str(genome)
+
+        if tree is None and ast_needed:
+            try:
+                tree = ast.parse(source_code)
+            except SyntaxError as e:
+                 logger.warning(f"Syntax error, AST alignment checks will fail: {e}")
+                 # Tree remains None, checks needing it will score 0
+
         for measure in self.alignment_measures:
             try:
+                # Prepare arguments for the measure function
+                measure_args = {}
+                func_params = measure['func'].__code__.co_varnames
+                
+                if 'genome' in func_params:
+                    measure_args['genome'] = genome
+                if 'source_code' in func_params:
+                    measure_args['source_code'] = source_code
+                if 'tree' in func_params:
+                    if tree is None:
+                        # Skip measure if AST is required but failed parsing
+                        continue 
+                    measure_args['tree'] = tree
+
                 # Run the alignment measure
-                measure_score = measure['func'](genome)
+                measure_score = measure['func'](**measure_args)
                 
                 # Ensure score is in [0, 1] range
                 measure_score = max(0.0, min(1.0, measure_score))
@@ -309,10 +383,14 @@ class FitnessEvaluator:
             Efficiency score (0-1)
         """
         # Get executable function from genome
+        exec_func = None
         try:
             exec_func = self._get_executable_function(genome)
             if exec_func is None:
-                return 0.0
+                 # Try to get the main function if no other function found
+                exec_func = self._get_executable_function(genome, function_name='main')
+                if exec_func is None:
+                    return 0.0 # Cannot execute
         except Exception as e:
             logger.debug(f"Error getting executable function: {str(e)}")
             return 0.0
@@ -418,15 +496,18 @@ class FitnessEvaluator:
         # 1.0 if memory is 0, 0.0 if memory is max_memory or above
         return max(0.0, 1.0 - (peak_memory / max_memory))
     
-    def _get_executable_function(self, genome) -> Optional[Callable]:
+    def _get_executable_function(self, genome, function_name: Optional[str] = None) -> Optional[Callable]:
         """
         Get an executable function from a genome.
+        If function_name is provided, look for that specific function.
+        Otherwise, find the first function defined.
         
         Args:
             genome: The genome to execute
+            function_name: Optional specific function name to find
             
         Returns:
-            Callable function or None if execution fails
+            Callable function or None if execution fails or function not found
         """
         # Get source code from genome
         if hasattr(genome, 'to_source'):
@@ -441,14 +522,22 @@ class FitnessEvaluator:
             # Execute the code in the local environment
             exec(source_code, {}, local_env)
             
-            # Find the first function defined in the code
-            for name, obj in local_env.items():
-                if inspect.isfunction(obj):
-                    return obj
-            
-            # No functions found
-            logger.debug("No functions found in genome")
-            return None
+            # Find the desired function
+            if function_name:
+                if function_name in local_env and inspect.isfunction(local_env[function_name]):
+                    return local_env[function_name]
+                else:
+                    logger.debug(f"Function '{function_name}' not found in genome")
+                    return None
+            else:
+                # Find the first function defined in the code
+                for name, obj in local_env.items():
+                    if inspect.isfunction(obj):
+                        return obj
+                
+                # No functions found
+                logger.debug("No functions found in genome")
+                return None
             
         except Exception as e:
             logger.debug(f"Error executing genome: {str(e)}")
@@ -465,6 +554,20 @@ class FitnessEvaluator:
         Returns:
             True if outputs match, False otherwise
         """
+        # First check if the current test case has a custom validator
+        current_test_case = None
+        if self.test_cases and hasattr(self, '_current_test_case_index'):
+            current_test_case = self.test_cases[self._current_test_case_index]
+        
+        # Use custom validator if available
+        if current_test_case and 'custom_validator' in current_test_case and current_test_case['custom_validator']:
+            try:
+                return current_test_case['custom_validator'](actual, expected)
+            except Exception as e:
+                logger.warning(f"Custom validator failed: {str(e)}")
+                # Fall back to standard comparison
+                pass
+        
         # Direct equality
         if actual == expected:
             return True
@@ -488,28 +591,10 @@ class FitnessEvaluator:
         return False
     
     # New alignment measure methods
-    def _measure_code_clarity(self, genome) -> float:
+    def _measure_code_clarity(self, source_code: str, tree: ast.AST) -> float:
         """
-        Measure code clarity, simplicity and readability.
-        
-        Args:
-            genome: The genome to evaluate
-            
-        Returns:
-            Score from 0-1 where 1 is most clear
+        Measure code clarity, simplicity and readability (uses AST).
         """
-        # Get source code from genome
-        if hasattr(genome, 'to_source'):
-            source_code = genome.to_source()
-        else:
-            source_code = str(genome)
-        
-        try:
-            # Parse the AST
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            return 0.0  # Invalid code gets lowest score
-        
         # Start with a perfect score and deduct for issues
         score = 1.0
         
@@ -537,10 +622,14 @@ class FitnessEvaluator:
         # 2. Function length (prefer functions under 30 lines)
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                function_source = ast.unparse(node)
-                function_lines = function_source.count('\n') + 1
-                if function_lines > 30:
-                    score -= min(0.2, (function_lines - 30) / 100)
+                try:
+                    function_source = ast.unparse(node)
+                    function_lines = function_source.count('\n') + 1
+                    if function_lines > 30:
+                        score -= min(0.2, (function_lines - 30) / 100)
+                except Exception:
+                    # Ignore errors during unparsing for this check
+                    pass 
         
         # 3. Variable name quality
         variable_lengths = []
@@ -572,9 +661,13 @@ class FitnessEvaluator:
             
             # Calculate maximum nesting depth
             if isinstance(node, (ast.If, ast.For, ast.While)):
-                depth = self._calculate_nesting_depth(node)
-                nesting_depth = max(nesting_depth, depth)
-        
+                try:
+                    depth = self._calculate_nesting_depth(node)
+                    nesting_depth = max(nesting_depth, depth)
+                except RecursionError:
+                    logger.warning("Max recursion depth exceeded calculating nesting depth.")
+                    nesting_depth = 99 # Penalize heavily if calculation fails
+
         # Penalize excessive complexity
         if complexity > 20:
             score -= min(0.2, (complexity - 20) / 100)
@@ -595,94 +688,45 @@ class FitnessEvaluator:
                 max_depth = max(max_depth, child_depth)
         return max_depth
     
-    def _measure_inclusive_language(self, genome) -> float:
+    def _measure_inclusive_language(self, source_code: str) -> float:
         """
-        Measure how inclusive and respectful the code language is.
-        
-        Args:
-            genome: The genome to evaluate
-            
-        Returns:
-            Score from 0-1 where 1 is most inclusive
+        Measure how inclusive and respectful the code language is (uses source code only).
         """
-        # Get source code from genome
-        if hasattr(genome, 'to_source'):
-            source_code = genome.to_source()
-        else:
-            source_code = str(genome)
-        
         # Start with a perfect score and deduct for issues
         score = 1.0
         
-        # Define problematic terms
+        # Define problematic terms (as before)
         problematic_terms = [
-            # Binary thinking terms
             'master', 'slave', 'blacklist', 'whitelist',
-            # Potentially exclusionary terms
             'guys', 'manpower', 'mankind',
-            # Hierarchical terms
             'superior', 'inferior', 'subordinate'
         ]
         
-        # Define preferred alternatives (for educative purposes)
-        alternatives = {
-            'master': 'main, primary, leader',
-            'slave': 'secondary, replica, follower',
-            'blacklist': 'blocklist, denylist',
-            'whitelist': 'allowlist, safelist',
-            'guys': 'folks, team, everyone',
-            'manpower': 'workforce, staff, personnel',
-            'mankind': 'humanity, people',
-            'superior': 'preceding, previous',
-            'inferior': 'following, subsequent'
-        }
-        
-        # Check for problematic terms in code, comments, strings, and identifiers
+        # Check for problematic terms in code, comments, strings
         for term in problematic_terms:
             pattern = r'\b' + term + r'\b'
-            matches = re.finditer(pattern, source_code, re.IGNORECASE)
-            if any(matches):
-                score -= 0.1  # Deduct for each type of problematic term
+            # Use regex search on the whole source code
+            if re.search(pattern, source_code, re.IGNORECASE):
+                score -= 0.1
         
-        # Check if code promotes inclusivity (positive points)
+        # Check if code promotes inclusivity (positive points) - as before
         positive_indicators = [
             'accessible', 'inclusive', 'diversity', 'respect', 'inclusion'
         ]
-        
         positive_score = 0
         for term in positive_indicators:
             pattern = r'\b' + term + r'\b'
             matches = list(re.finditer(pattern, source_code, re.IGNORECASE))
-            positive_score += min(0.05 * len(matches), 0.1)  # Cap at 0.1 per term
-        
-        # Add positive indicators to score (up to 0.2 total)
+            positive_score += min(0.05 * len(matches), 0.1)
         score += min(positive_score, 0.2)
         
         # Ensure score is in [0, 1] range
         return max(0.0, min(1.0, score))
     
-    def _measure_service_orientation(self, genome) -> float:
+    def _measure_service_orientation(self, tree: ast.AST) -> float:
         """
-        Measure how well the code serves others rather than self-serving.
-        
-        Args:
-            genome: The genome to evaluate
-            
-        Returns:
-            Score from 0-1 where 1 is most service-oriented
+        Measure how well the code serves others rather than self-serving (uses AST).
         """
-        # Get source code from genome
-        if hasattr(genome, 'to_source'):
-            source_code = genome.to_source()
-        else:
-            source_code = str(genome)
-        
-        try:
-            # Parse the AST
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            return 0.0  # Invalid code gets lowest score
-        
         # Start with a neutral score
         score = 0.5
         
@@ -697,12 +741,11 @@ class FitnessEvaluator:
                 docstring = ast.get_docstring(node)
                 if docstring:
                     documented_functions += 1
-                    # Check docstring quality
+                    # Check docstring quality (as before)
                     if "Args:" in docstring or "Parameters:" in docstring:
                         docstring_score += 0.5
                     if "Returns:" in docstring:
                         docstring_score += 0.5
-                    # Reward longer, more helpful docstrings
                     lines = docstring.strip().count('\n') + 1
                     if lines >= 3:
                         docstring_score += min(lines / 10, 0.5)
@@ -714,265 +757,180 @@ class FitnessEvaluator:
             score += 0.2 * avg_docstring_score
             score += 0.1 * documentation_ratio
         
-        # 2. Error handling and user-friendly messages
+        # 2. Error handling and user-friendly messages (as before)
         error_handling_score = 0
         try_count = 0
-        
         for node in ast.walk(tree):
             if isinstance(node, ast.Try):
                 try_count += 1
-                
-                # Check for helpful error messages in except blocks
                 for handler in node.handlers:
                     for subnode in ast.walk(handler):
                         if isinstance(subnode, (ast.Raise, ast.Return)) and hasattr(subnode, 'value'):
                             if isinstance(subnode.value, ast.Call) and hasattr(subnode.value.func, 'id'):
                                 if subnode.value.func.id in ['Exception', 'ValueError', 'RuntimeError']:
-                                    # Check if custom error message is provided
                                     if subnode.value.args and isinstance(subnode.value.args[0], ast.Str):
                                         error_handling_score += 0.5
-        
-        # Add error handling score (max 0.1)
         if try_count > 0:
             score += min(0.1, error_handling_score / (try_count * 2))
         
-        # 3. Check for input validation
+        # 3. Check for input validation (as before)
         validation_score = 0
-        
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                body_code = ast.unparse(node)
-                # Look for validation patterns like type checks or assertions
-                validation_patterns = [
-                    r'isinstance\(', r'assert\s+', r'if\s+.+\s+is\s+(not\s+)?None',
-                    r'if\s+not\s+.+:', r'if\s+len\(.+\)\s*[<>=]'
-                ]
-                
-                for pattern in validation_patterns:
-                    if re.search(pattern, body_code):
-                        validation_score += 0.5
-                        break
-        
-        # Add validation score (max 0.2)
+                try:
+                    body_code = ast.unparse(node)
+                    validation_patterns = [
+                        r'isinstance\(', r'assert\s+', r'if\s+.+\s+is\s+(not\s+)?None',
+                        r'if\s+not\s+.+:', r'if\s+len\(.+\)\s*[<>=]'
+                    ]
+                    for pattern in validation_patterns:
+                        if re.search(pattern, body_code):
+                            validation_score += 0.5
+                            break
+                except Exception:
+                     # Ignore errors during unparsing for this check
+                    pass
         if total_functions > 0:
             score += min(0.2, validation_score / total_functions)
         
         # Ensure score is in [0, 1] range
         return max(0.0, min(1.0, score))
     
-    def _measure_mindful_resource_usage(self, genome) -> float:
+    def _measure_mindful_resource_usage(self, source_code: str, tree: ast.AST) -> float:
         """
-        Measure how mindfully the code uses computational resources.
-        
-        Args:
-            genome: The genome to evaluate
-            
-        Returns:
-            Score from 0-1 where 1 is most mindful
+        Measure how mindfully the code uses computational resources (uses AST and source).
         """
-        # Get source code from genome
-        if hasattr(genome, 'to_source'):
-            source_code = genome.to_source()
-        else:
-            source_code = str(genome)
-        
-        try:
-            # Parse the AST
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            return 0.0  # Invalid code gets lowest score
-        
         # Start with a perfect score and deduct for issues
         score = 1.0
         
-        # 1. Check for inefficient patterns
+        # 1. Check for inefficient patterns (using regex on source)
+        # Restored with cleaner syntax
         inefficient_patterns = [
-            # String concatenation in loops
-            (r'for\s+.+:\s*\n\s+.+\s*\+=\s*[\'"]\w*[\'"]', 
-             "String concatenation in loop (use join instead)"),
-            
-            # Multiple list/dict comprehensions that could be combined
-            (r'\[[^\]]+\]\s*\n\s*\[[^\]]+\]', 
-             "Multiple list comprehensions could be combined"),
-            
-            # Nested loops with O(n²) or worse complexity
-            (r'for\s+.+:\s*\n\s+for\s+.+:\s*\n\s+for\s+.+:', 
-             "Triple nested loop (O(n³) complexity)"),
-            
-            # Creating large temporary collections
-            (r'range\(\d{5,}\)', 
-             "Very large range created"),
-            
-            # Repeatedly calling expensive functions
-            (r'for\s+.+:\s*\n\s+.+\(.*sorted\(', 
-             "Sorting inside a loop")
+            (r"for .+ in .+:.+\+=.+", "String concatenation in loop (use join instead)"),
+            (r"\[.+\].+\[.+\]", "Multiple list comprehensions could be combined"),
+            (r"for.+:.*for.+:.*for.+:", "Triple nested loop (O(n³) complexity)"),
+            (r"range\(\d{5,}\)", "Very large range created"),
+            (r"for.+:.+sorted\(", "Sorting inside a loop")
         ]
         
-        # Check inefficient patterns
         for pattern, message in inefficient_patterns:
             if re.search(pattern, source_code, re.MULTILINE):
                 score -= 0.1
         
-        # 2. Check for resource management
+        # 2. Check for resource management (using AST) - as before
         file_handles = []
         file_closings = []
-        
         for node in ast.walk(tree):
-            # Check for file opens
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'open':
                 file_handles.append(node)
-            
-            # Check for with statements (good practice)
             if isinstance(node, ast.With):
                 for item in node.items:
                     if (isinstance(item.context_expr, ast.Call) and 
                         isinstance(item.context_expr.func, ast.Name) and 
                         item.context_expr.func.id == 'open'):
                         file_closings.append(item)
-            
-            # Check for explicit file closes
             if (isinstance(node, ast.Call) and 
                 isinstance(node.func, ast.Attribute) and 
                 node.func.attr == 'close'):
                 file_closings.append(node)
-        
-        # Penalize unclosed file handles
         if len(file_handles) > len(file_closings):
             score -= 0.2
         
-        # 3. Check for memory efficiency
+        # 3. Check for memory efficiency (using AST) - as before
         memory_wasteful_patterns = 0
-        
         for node in ast.walk(tree):
-            # Unnecessarily large data structures
             if isinstance(node, ast.Dict) and len(node.keys) > 100:
                 memory_wasteful_patterns += 1
-            
-            # Large literal collections
             if isinstance(node, ast.List) and len(node.elts) > 100:
                 memory_wasteful_patterns += 1
-        
-        # Penalize memory wastefulness
         score -= min(0.3, memory_wasteful_patterns * 0.1)
         
-        # 4. Check for CPU-friendly code
+        # 4. Check for CPU-friendly code (using AST) - as before
         cpu_intensive_operations = 0
-        
         for node in ast.walk(tree):
-            # Recursive calls without memoization
             if isinstance(node, ast.FunctionDef):
-                function_name = node.name
-                # Check if function calls itself
-                for subnode in ast.walk(node):
-                    if (isinstance(subnode, ast.Call) and 
-                        isinstance(subnode.func, ast.Name) and 
-                        subnode.func.id == function_name):
-                        # Check if there's no memoization
-                        function_body = ast.unparse(node)
-                        if 'cache' not in function_body and 'memo' not in function_body:
-                            cpu_intensive_operations += 1
-        
-        # Penalize CPU-intensive operations
+                try:
+                    function_name = node.name
+                    for subnode in ast.walk(node):
+                        if (isinstance(subnode, ast.Call) and 
+                            isinstance(subnode.func, ast.Name) and 
+                            subnode.func.id == function_name):
+                            function_body = ast.unparse(node)
+                            if 'cache' not in function_body and 'memo' not in function_body:
+                                cpu_intensive_operations += 1
+                except Exception:
+                    # Ignore errors during unparsing for this check
+                    pass
         score -= min(0.2, cpu_intensive_operations * 0.1)
         
         # Ensure score is in [0, 1] range
         return max(0.0, min(1.0, score))
     
-    def _measure_truthful_design(self, genome) -> float:
+    def _measure_truthful_design(self, tree: ast.AST) -> float:
         """
-        Measure how truthful and transparent the code is in its communication.
-        
-        Args:
-            genome: The genome to evaluate
-            
-        Returns:
-            Score from 0-1 where 1 is most truthful
+        Measure how truthful and transparent the code is (uses AST).
         """
-        # Get source code from genome
-        if hasattr(genome, 'to_source'):
-            source_code = genome.to_source()
-        else:
-            source_code = str(genome)
-        
-        try:
-            # Parse the AST
-            tree = ast.parse(source_code)
-        except SyntaxError:
-            return 0.0  # Invalid code gets lowest score
-        
         # Start with a perfect score and deduct for issues
         score = 1.0
         
-        # 1. Check for misleading function names
+        # 1. Check for misleading function names (as before)
         misleading_name_count = 0
-        
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                name = node.name.lower()
-                docstring = ast.get_docstring(node)
-                function_body = ast.unparse(node.body)
-                
-                # Check if name suggests one action but does another
-                if ('get' in name) and ('set' in function_body or 'save' in function_body):
-                    misleading_name_count += 1
-                elif ('is' in name or 'has' in name) and 'return ' not in function_body:
-                    misleading_name_count += 1
-                elif ('validate' in name) and 'return True' in function_body and 'if' not in function_body:
-                    misleading_name_count += 1
-        
-        # Penalize misleading names
+                try:
+                    name = node.name.lower()
+                    function_body = ast.unparse(node.body)
+                    if ('get' in name) and ('set' in function_body or 'save' in function_body):
+                        misleading_name_count += 1
+                    elif ('is' in name or 'has' in name) and 'return ' not in function_body:
+                        misleading_name_count += 1
+                    elif ('validate' in name) and 'return True' in function_body and 'if' not in function_body:
+                        misleading_name_count += 1
+                except Exception:
+                    # Ignore errors during unparsing for this check
+                    pass
         score -= min(0.3, misleading_name_count * 0.1)
         
-        # 2. Check for actual/claimed behavior consistency
+        # 2. Check for actual/claimed behavior consistency (as before)
         behavior_mismatch_count = 0
-        
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                docstring = ast.get_docstring(node)
-                if docstring:
-                    # Check for docstring claims that don't match implementation
-                    if 'fast' in docstring.lower() or 'efficient' in docstring.lower():
+                try:
+                    docstring = ast.get_docstring(node)
+                    if docstring:
+                        docstring_lower = docstring.lower()
                         function_body = ast.unparse(node.body)
-                        if 'for' in function_body and 'for' in function_body[function_body.find('for')+3:]:
-                            # Nested loops in a function claiming to be fast
-                            behavior_mismatch_count += 1
-                    
-                    # Check for docstring promises vs. exceptions
-                    if 'always' in docstring.lower() or 'guaranteed' in docstring.lower():
-                        function_body = ast.unparse(node.body)
-                        if 'raise' in function_body:
-                            # Function claims to always work but can raise exceptions
-                            behavior_mismatch_count += 1
-        
-        # Penalize behavior mismatches
+                        if 'fast' in docstring_lower or 'efficient' in docstring_lower:
+                            if function_body.count('for ') >= 2:
+                                behavior_mismatch_count += 1
+                        if 'always' in docstring_lower or 'guaranteed' in docstring_lower:
+                            if 'raise' in function_body:
+                                behavior_mismatch_count += 1
+                except Exception:
+                     # Ignore errors during unparsing for this check
+                    pass
         score -= min(0.3, behavior_mismatch_count * 0.1)
         
-        # 3. Check for transparent error handling
+        # 3. Check for transparent error handling (as before)
         for node in ast.walk(tree):
             if isinstance(node, ast.Try):
                 for handler in node.handlers:
-                    # Check for empty except blocks or generic exceptions
                     if not handler.body or len(handler.body) <= 1:
                         score -= 0.1
                     if handler.type is None or (isinstance(handler.type, ast.Name) and handler.type.id == 'Exception'):
                         score -= 0.05
-                    # Check for exception suppression
                         if len(handler.body) == 1 and isinstance(handler.body[0], ast.Pass):
                             score -= 0.1
         
-        # 4. Check for honest naming patterns
+        # 4. Check for honest naming patterns (as before)
         variable_count = 0
         descriptive_names = 0
-        
         for node in ast.walk(tree):
             if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
                 variable_count += 1
                 name = node.id
-                # Check if name is descriptive enough
                 if len(name) > 3 and not name.startswith('_'):
                     descriptive_names += 1
-        
-        # Reward descriptive naming
         if variable_count > 0:
             descriptive_ratio = descriptive_names / variable_count
             score += 0.1 * descriptive_ratio
