@@ -43,6 +43,9 @@ class CodeGenome:
         else:
             # Create a minimal random function if nothing is provided
             self._create_random_genome()
+        
+        # Initialize fitness as negative infinity (worst possible)
+        self.fitness = float('-inf')
     
     def _create_random_genome(self):
         """Create a simple random function as a starting point."""
@@ -147,16 +150,35 @@ class CodeGenome:
     
     def to_source(self) -> str:
         """
-        Convert the genome to source code.
+        Convert the AST back to source code.
         
         Returns:
-            Source code string
+            The source code string representation
         """
-        if self._source_code is None and self.ast_tree:
-            # Generate source code from AST
-            self._source_code = ast.unparse(self.ast_tree)
+        if self._source_code:
+            return self._source_code
+        try:
+            return ast.unparse(self.ast_tree)
+        except Exception:
+            return "def fallback():\n    return 0"
+    
+    def set_fitness(self, fitness: float) -> None:
+        """
+        Set the fitness score for this genome.
         
-        return self._source_code
+        Args:
+            fitness: The fitness score to set
+        """
+        self.fitness = fitness
+    
+    def get_fitness(self) -> float:
+        """
+        Get the current fitness score.
+        
+        Returns:
+            The current fitness score
+        """
+        return self.fitness 
     
     def clone(self) -> 'CodeGenome':
         """

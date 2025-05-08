@@ -28,6 +28,107 @@ class FitnessEvaluator:
     def __init__(self, 
                 ethical_filter=None, 
                 weights=None):
+        """Initialize the Fitness Evaluator."""
+        # Ethical boundary enforcer (optional)
+        self.ethical_filter = ethical_filter
+        
+        # Default weights for objectives - updated to prioritize alignment
+        self.weights = {
+            'alignment': 0.6,   # Alignment with principles (increased from 0.5)
+            'functionality': 0.25,  # Functional correctness (reduced from 0.3)
+            'efficiency': 0.15,   # Resource efficiency (reduced from 0.2)
+        }
+        
+        # Update weights if provided
+        if weights:
+            for key, value in weights.items():
+                if key in self.weights:
+                    self.weights[key] = value
+            
+            # Normalize weights to sum to 1
+            total = sum(self.weights.values())
+            if total > 0:
+                self.weights = {k: v / total for k, v in self.weights.items()}
+        
+        # Test cases for functional evaluation
+        self.test_cases = []
+        
+        # Resource constraint metrics
+        self.resource_constraints = {
+            'max_execution_time': 1.0,  # seconds
+            'max_memory_usage': 100,    # MB
+        }
+        
+        # Alignment measures with default measures based on universal principles
+        self.alignment_measures = [
+            {
+                'func': self._measure_code_clarity,
+                'weight': 0.2,
+                'name': "Code clarity and simplicity"
+            },
+            {
+                'func': self._measure_inclusive_language,
+                'weight': 0.2,
+                'name': "Inclusive and respectful language"
+            },
+            {
+                'func': self._measure_service_orientation,
+                'weight': 0.2,
+                'name': "Service-oriented design"
+            },
+            {
+                'func': self._measure_mindful_resource_usage,
+                'weight': 0.2,
+                'name': "Mindful resource usage"
+            },
+            {
+                'func': self._measure_truthful_design,
+                'weight': 0.2,
+                'name': "Truthful communication in code"
+            }
+        ]
+
+    def add_bluetooth_test_cases(self):
+        """Add test cases specifically for evaluating Bluetooth functionality."""
+        
+        # Test case 1: Scan for nearby devices
+        self.add_test_case(
+            input_data={},  # No input needed
+            expected_output=["name", "address", "signal_strength"],  # Check for these fields
+            weight=0.4,
+            name="scan_devices",
+            custom_validator=lambda actual, expected: (
+                isinstance(actual, list) and 
+                all(isinstance(item, dict) for item in actual) and
+                all(key in item for item in actual for key in expected)
+            ) if isinstance(actual, list) else False
+        )
+        
+        # Test case 2: Get device details
+        self.add_test_case(
+            input_data={"address": "00:11:22:33:44:55"},
+            expected_output={"name": str, "type": str, "signal_strength": float},
+            weight=0.3,
+            name="device_details",
+            custom_validator=lambda actual, expected: (
+                isinstance(actual, dict) and 
+                all(isinstance(actual[key], expected[key]) for key in expected)
+            ) if isinstance(actual, dict) else False
+        )
+        
+        # Test case 3: Check device type detection
+        self.add_test_case(
+            input_data={"address": "00:11:22:33:44:55", "type": "phone"},
+            expected_output={"type": "phone"},
+            weight=0.3,
+            name="detect_device_type",
+            custom_validator=lambda actual, expected: (
+                isinstance(actual, dict) and 
+                actual.get("type") == expected["type"]
+            ) if isinstance(actual, dict) else False
+        )
+
+    def set_weights(self, **kwargs):
         """
         Initialize the Fitness Evaluator.
         

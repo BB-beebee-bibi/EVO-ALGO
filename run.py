@@ -12,6 +12,8 @@ import platform
 from typing import Optional, List
 from trisolaris.core import EvolutionEngine, CodeGenome
 from trisolaris.evaluation import FitnessEvaluator, EthicalBoundaryEnforcer
+import datetime
+import shutil
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -83,20 +85,31 @@ def load_initial_genomes(input_dir: str, task: str = "general") -> List[CodeGeno
     """Load initial genomes from Python files in the input directory."""
     genomes = []
     
-    # For USB scanner task, use our template
-    if task == "usb_scanner":
-        template_path = os.path.join(input_dir, "guidance", "usb_scanner_template.py")
-        if os.path.exists(template_path):
-            logger.info(f"Using USB scanner template from {template_path}")
-            try:
-                with open(template_path, 'r', encoding='utf-8') as f:
-                    source = f.read()
-                genomes.append(CodeGenome.from_source(source))
-                return genomes
-            except Exception as e:
-                logger.warning(f"Could not load USB scanner template: {e}")
+    # Try to find a template that matches the task type
+    template_path = os.path.join(input_dir, "guidance", f"{task}_template.py")
+    if os.path.exists(template_path):
+        logger.info(f"Using {task} template from {template_path}")
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                source = f.read()
+            genomes.append(CodeGenome.from_source(source))
+            return genomes
+        except Exception as e:
+            logger.warning(f"Could not load {task} template: {e}")
     
-    # Start with a directory-based genome
+    # If no specific template found, use a general template if available
+    general_template_path = os.path.join(input_dir, "guidance", "general_template.py")
+    if os.path.exists(general_template_path):
+        logger.info(f"Using general template from {general_template_path}")
+        try:
+            with open(general_template_path, 'r', encoding='utf-8') as f:
+                source = f.read()
+            genomes.append(CodeGenome.from_source(source))
+            return genomes
+        except Exception as e:
+            logger.warning(f"Could not load general template: {e}")
+    
+    # If no template found, start with a directory-based genome
     try:
         genomes.append(CodeGenome.from_directory(input_dir))
         logger.info(f"Loaded directory genome from {input_dir}")
@@ -159,6 +172,50 @@ def add_usb_scan_test_cases(evaluator: FitnessEvaluator):
         ) if isinstance(actual, dict) else False
     )
 
+def add_bluetooth_test_cases(evaluator: FitnessEvaluator):
+    """Add test cases specifically for evaluating Bluetooth functionality."""
+    
+    # Test case 1: Scan for nearby devices
+    evaluator.add_test_case(
+        input_data={},  # No input needed
+        expected_output=["name", "address", "signal_strength"],  # Check for these fields
+        weight=0.4,
+        name="scan_devices",
+        custom_validator=lambda actual, expected: (
+            isinstance(actual, list) and 
+            all(isinstance(item, dict) for item in actual) and
+            all(key in item for item in actual for key in expected)
+        )
+    )
+    
+    # Test case 2: Get device info
+    evaluator.add_test_case(
+        input_data={"address": "00:11:22:33:44:55"},  # Example address
+        expected_output={
+            "name": str,
+            "type": str,
+            "signal_strength": float
+        },
+        weight=0.3,
+        name="get_device_info",
+        custom_validator=lambda actual, expected: (
+            isinstance(actual, dict) and 
+            all(isinstance(actual[key], expected[key]) for key in expected)
+        )
+    )
+    
+    # Test case 3: Check device type detection
+    evaluator.add_test_case(
+        input_data={"address": "00:11:22:33:44:55", "type": "phone"},
+        expected_output={"type": "phone"},
+        weight=0.3,
+        name="detect_device_type",
+        custom_validator=lambda actual, expected: (
+            isinstance(actual, dict) and 
+            actual.get("type") == expected["type"]
+        )
+    )
+
 def main():
     parser = argparse.ArgumentParser(
         description="Evolve code using the Trisolaris evolutionary framework"
@@ -170,7 +227,7 @@ def main():
     parser.add_argument(
         "--output-dir", "-o",
         default="evolved_output",
-        help="Directory to save evolved code (default: evolved_output)"
+        help="Base directory for all evolution trials"
     )
     parser.add_argument(
         "--pop-size", "-p",
@@ -209,14 +266,27 @@ def main():
     )
     parser.add_argument(
         "--task",
-        choices=["general", "usb_scanner"],
         default="general",
-        help="Specific task to evolve (default: general)"
+        help="The type of task to evolve (e.g., bluetooth_scanner, usb_scanner, etc.)"
     )
     args = parser.parse_args()
 
-    # Create output directory if it doesn't exist
+    # Create base output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
+    
+    # Clean up any old trial directories that might be incomplete
+    for trial_dir in [d for d in os.listdir(args.output_dir) if d.startswith("trial_")]:
+        trial_path = os.path.join(args.output_dir, trial_dir)
+        if not os.path.exists(os.path.join(trial_path, "completed")):
+            logger.info(f"Cleaning up incomplete trial: {trial_dir}")
+            shutil.rmtree(trial_path)
+    
+    # Create a unique trial directory for this run
+    trial_count = len([d for d in os.listdir(args.output_dir) if d.startswith("trial_")]) + 1
+    current_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    trial_dir = os.path.join(args.output_dir, f"trial_{trial_count:04d}_{current_time}")
+    os.makedirs(trial_dir, exist_ok=True)
+    logger.info(f"Starting trial {trial_count} in directory: {trial_dir}")
     
     # 1) Load initial genomes
     initial_genomes = load_initial_genomes(args.input_dir, args.task)
@@ -240,6 +310,9 @@ def main():
     if args.task == "usb_scanner":
         add_usb_scan_test_cases(evaluator)
         logger.info("Added USB scanner test cases")
+    elif args.task == "bluetooth_scanner":
+        add_bluetooth_test_cases(evaluator)
+        logger.info("Added Bluetooth scanner test cases")
     
     # 5) Configure weights for objectives if ethics is enabled
     if args.ethics_level == "full":
@@ -280,14 +353,19 @@ def main():
         # Evaluate the current generation
         engine.evaluate_population()
         
-        # Save the best solution of this generation if requested
-        if args.save_all_generations:
-            best_of_gen = engine.get_best_solution()
-            if best_of_gen:
-                gen_dir = os.path.join(args.output_dir, f"generation_{gen}")
-                os.makedirs(gen_dir, exist_ok=True)
-                with open(os.path.join(gen_dir, "best.py"), "w", encoding="utf-8") as f:
-                    f.write(best_of_gen.to_source())
+        # Create generation directory
+        gen_dir = os.path.join(trial_dir, f"generation_{gen:03d}")
+        os.makedirs(gen_dir, exist_ok=True)
+        
+        # Evaluate the current generation
+        engine.evaluate_population()
+        
+        # Save all solutions in this generation
+        solutions = sorted(engine.population, key=lambda x: x.fitness, reverse=True)
+        for i, solution in enumerate(solutions[:3], 1):  # Save top 3 solutions
+            solution_path = os.path.join(gen_dir, f"solution_{i:02d}_fitness_{solution.fitness:.4f}.py")
+            with open(solution_path, "w", encoding="utf-8") as f:
+                f.write(solution.to_source())
         
         # Create the next generation (unless it's the last generation)
         if gen < args.gens - 1:
@@ -298,13 +376,27 @@ def main():
     # 8) Save the final best solution
     best = engine.get_best_solution()
     if best:
-        best_path = os.path.join(args.output_dir, "best.py")
-        with open(best_path, "w", encoding="utf-8") as f:
-            f.write(best.to_source())
-        logger.info(f"Best solution saved to {best_path}")
+        # Mark this trial as completed
+        with open(os.path.join(trial_dir, "completed"), "w") as f:
+            f.write(f"Trial completed successfully at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        
+        # Save the final generation's top solutions
+        gen_dir = os.path.join(trial_dir, f"generation_{args.gens-1:03d}")
+        os.makedirs(gen_dir, exist_ok=True)
+        
+        # Save the top 3 solutions from the final generation
+        solutions = sorted(engine.population, key=lambda x: x.fitness, reverse=True)
+        for i, solution in enumerate(solutions[:3], 1):
+            solution_dir = os.path.join(trial_dir, f"generation_{gen}")
+            os.makedirs(solution_dir, exist_ok=True)
+            solution_path = os.path.join(solution_dir, f"solution_{i}.py")
+            with open(solution_path, "w", encoding="utf-8") as f:
+                f.write(solution.to_source())
+        logger.info(f"Best solution saved to {trial_dir}")
         logger.info(f"Best fitness: {engine.best_fitness:.4f}")
     else:
         logger.warning("No valid solution found")
 
 if __name__ == "__main__":
+    main()
     main() 
