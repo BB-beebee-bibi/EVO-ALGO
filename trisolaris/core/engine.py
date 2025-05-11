@@ -77,10 +77,43 @@ class EvolutionEngine:
             'diversity': []
         }
     
-    def initialize_population(self):
-        """Initialize a random population of solutions."""
-        self.population = [self.genome_class() for _ in range(self.population_size)]
-        logger.info(f"Initialized population with {self.population_size} individuals")
+    def initialize_population(self, size=None, task_description=None, task_type=None, **genome_kwargs):
+        """
+        Initialize a random population of solutions.
+        
+        Args:
+            size: Optional override for population size
+            task_description: Optional description of the task for specialized genomes
+            task_type: Optional task type identifier for specialized genomes
+            **genome_kwargs: Additional keyword arguments to pass to the genome constructor
+        """
+        # Use provided size if available, otherwise use the instance's population_size
+        actual_size = size if size is not None else self.population_size
+        
+        # Create population with parameters if available
+        if task_description or task_type or genome_kwargs:
+            # Initialize with specialized parameters
+            genome_params = {}
+            if task_description:
+                genome_params['task_description'] = task_description
+            if task_type:
+                genome_params['task_type'] = task_type
+            # Add any additional parameters
+            genome_params.update(genome_kwargs)
+            
+            try:
+                self.population = [self.genome_class(**genome_params) for _ in range(actual_size)]
+                logger.info(f"Initialized specialized population with {actual_size} individuals")
+            except TypeError as e:
+                # Fall back to standard initialization if specialized params not supported
+                logger.warning(f"Genome class does not support specialized parameters: {str(e)}")
+                logger.warning("Falling back to standard genome initialization")
+                self.population = [self.genome_class() for _ in range(actual_size)]
+        else:
+            # Standard initialization
+            self.population = [self.genome_class() for _ in range(actual_size)]
+        
+        logger.info(f"Initialized population with {len(self.population)} individuals")
     
     def evaluate_population(self):
         """Evaluate fitness for all individuals in the population."""
@@ -257,6 +290,33 @@ class EvolutionEngine:
     def get_best_solution(self) -> CodeGenome:
         """Return the best solution found so far."""
         return self.best_solution
+        
+    def get_best_fitness(self) -> float:
+        """Return the fitness of the best solution found so far."""
+        return self.best_fitness
+    
+    def get_average_fitness(self) -> float:
+        """Return the average fitness of the current population."""
+        valid_scores = [f for f in self.fitness_scores if f != float('-inf')]
+        if not valid_scores:
+            return 0.0
+        return sum(valid_scores) / len(valid_scores)
+        
+    def calculate_diversity(self) -> float:
+        """Calculate the genetic diversity in the current population."""
+        # Simple diversity measure: proportion of unique solutions
+        if not self.population:
+            return 0.0
+            
+        # Use string representation for comparison
+        unique_solutions = set()
+        for genome in self.population:
+            try:
+                unique_solutions.add(str(genome.to_source()))
+            except:
+                pass
+        
+        return len(unique_solutions) / len(self.population)
     
     def set_selection_pressure(self, pressure: float):
         """Set the selection pressure parameter."""

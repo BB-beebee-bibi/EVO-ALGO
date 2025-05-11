@@ -239,7 +239,7 @@ class ProgemonTrainer:
             # Initialize population with task description
             engine.initialize_population(
                 size=settings["pop_size"],
-                description=settings["description"],
+                task_description=settings["description"],
                 task_type=settings["task"]
             )
             
@@ -336,3 +336,4 @@ class ProgemonTrainer:
 if __name__ == "__main__":
     trainer = ProgemonTrainer()
     trainer.main()
+

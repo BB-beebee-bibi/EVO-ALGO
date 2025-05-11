@@ -43,6 +43,22 @@ class AdaptiveTweaker:
         # Create directory for metrics logging
         self.metrics_dir = "evolution_metrics"
         os.makedirs(self.metrics_dir, exist_ok=True)
+    
+    def reset(self):
+        """Reset metrics and history."""
+        self.metrics = EvolutionMetrics()
+        self.history = []
+        print(f"Reset AdaptiveTweaker metrics and history")
+    
+    def set_initial_params(self, settings: Dict[str, float]):
+        """
+        Set initial parameters.
+        
+        Args:
+            settings: Dictionary containing parameter settings
+        """
+        self.settings = settings.copy()
+        print(f"Set initial parameters: {self.settings}")
 
     def record_metrics(self, population: List, best_fitness: float, avg_fitness: float):
         """Record current metrics and save to history."""
@@ -59,8 +75,37 @@ class AdaptiveTweaker:
                 'settings': self.settings
             }, f, indent=2)
 
-    def adjust_parameters(self) -> Dict[str, float]:
-        """Adjust evolution parameters based on performance metrics."""
+    def adjust_parameters(self, generation: int = None,
+                         best_fitness: float = None,
+                         avg_fitness: float = None,
+                         diversity: float = None) -> Dict[str, float]:
+        """
+        Adjust evolution parameters based on performance metrics.
+        
+        Args:
+            generation: Current generation number (optional)
+            best_fitness: Best fitness in current generation (optional)
+            avg_fitness: Average fitness in current generation (optional)
+            diversity: Population diversity in current generation (optional)
+        
+        Returns:
+            Dict containing updated parameter settings
+        """
+        # If parameters are provided, record them first
+        if all(param is not None for param in [generation, best_fitness, avg_fitness]):
+            # Create a mock population with the provided fitness values
+            mock_population = [
+                type('MockGenome', (), {'fitness': avg_fitness}),
+                type('MockGenome', (), {'fitness': best_fitness})
+            ]
+            
+            # Record the metrics
+            self.record_metrics(mock_population, best_fitness, avg_fitness)
+            
+            # Override diversity if provided
+            if diversity is not None and len(self.metrics.diversity_history) > 0:
+                self.metrics.diversity_history[-1] = diversity
+                
         if len(self.metrics.best_fitness_history) < self.plateau_threshold:
             return self.settings  # Not enough data yet
 
@@ -72,7 +117,10 @@ class AdaptiveTweaker:
                 self.settings['mutation_rate'] * 1.1,
                 self.max_mutation_rate
             )
-            print_color(f"Detected fitness plateau. Increasing mutation rate to {self.settings['mutation_rate']:.3f}", Colors.YELLOW)
+            try:
+                print_color(f"Detected fitness plateau. Increasing mutation rate to {self.settings['mutation_rate']:.3f}", Colors.YELLOW)
+            except (NameError, AttributeError):
+                print(f"Detected fitness plateau. Increasing mutation rate to {self.settings['mutation_rate']:.3f}")
 
         # Check diversity
         current_diversity = self.metrics.diversity_history[-1]
@@ -82,7 +130,10 @@ class AdaptiveTweaker:
                 self.settings['mutation_rate'] * 1.2,
                 self.max_mutation_rate
             )
-            print_color(f"Low diversity detected. Increasing mutation rate to {self.settings['mutation_rate']:.3f}", Colors.YELLOW)
+            try:
+                print_color(f"Low diversity detected. Increasing mutation rate to {self.settings['mutation_rate']:.3f}", Colors.YELLOW)
+            except (NameError, AttributeError):
+                print(f"Low diversity detected. Increasing mutation rate to {self.settings['mutation_rate']:.3f}")
 
         # Check if mutation rate is too high
         if self.settings['mutation_rate'] > self.max_mutation_rate:
@@ -93,6 +144,25 @@ class AdaptiveTweaker:
             self.settings['mutation_rate'] = self.min_mutation_rate
 
         return self.settings
+        
+    def update_parameters(self, avg_fitness: float, best_fitness: float):
+        """
+        Update parameters based on fitness metrics.
+        This is a compatibility method used by progremon.py.
+        
+        Args:
+            avg_fitness: Average fitness in current generation
+            best_fitness: Best fitness in current generation
+        """
+        # Create a mock population with the provided fitness values
+        mock_population = [
+            type('MockGenome', (), {'fitness': avg_fitness}),
+            type('MockGenome', (), {'fitness': best_fitness})
+        ]
+        
+        # Record metrics and adjust parameters
+        self.record_metrics(mock_population, best_fitness, avg_fitness)
+        return self.adjust_parameters()
 
     def get_current_settings(self) -> Dict[str, float]:
         """Get current settings."""

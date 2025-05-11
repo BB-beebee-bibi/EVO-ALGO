@@ -19,17 +19,26 @@ class CodeGenome:
     between source code and abstract syntax tree (AST) representations.
     """
     
-    def __init__(self, ast_tree=None, source_code=None):
+    def __init__(self, ast_tree=None, source_code=None, task_description=None, task_type=None, template_code=None, **kwargs):
         """
         Initialize a new CodeGenome.
         
         Args:
             ast_tree: Optional AST representation of the code
             source_code: Optional source code string
+            task_description: Optional natural language description of the task
+            task_type: Optional identifier for the type of task (e.g., 'bluetooth_scan')
+            template_code: Optional template code to use as a starting point
+            **kwargs: Additional parameters for specialized genome creation
             
         Note: At least one of ast_tree or source_code should be provided,
-              unless random initialization is desired.
+              unless random initialization or template-based initialization is desired.
         """
+        # Store task information
+        self.task_description = task_description
+        self.task_type = task_type
+        self.code = None  # Public access to code
+        
         if ast_tree:
             self.ast_tree = ast_tree
             self._source_code = None
@@ -40,38 +49,191 @@ class CodeGenome:
             except SyntaxError:
                 # Fallback to storing just source code if parsing fails
                 self.ast_tree = None
+        elif template_code:
+            # Use the provided template code as a starting point
+            self._source_code = template_code
+            try:
+                self.ast_tree = ast.parse(template_code)
+            except SyntaxError:
+                # Fallback to storing just source code if parsing fails
+                self.ast_tree = None
+                
+            # Add task-specific information as a comment if available
+            if task_description:
+                self._source_code = f"# Task: {task_description}\n{self._source_code}"
         else:
-            # Create a minimal random function if nothing is provided
-            self._create_random_genome()
+            # Create a task-specific or random genome
+            self._create_task_specific_genome()
         
+        # Store the source code as the accessible code property
+        if self._source_code:
+            self.code = self._source_code
+            
         # Initialize fitness as negative infinity (worst possible)
         self.fitness = float('-inf')
+    
+    def _create_task_specific_genome(self):
+        """Create a genome that is either task-specific or random."""
+        if self.task_type == "bluetooth_scan":
+            # Create a specialized Bluetooth scanning program
+            self._create_bluetooth_scan_genome()
+        elif self.task_type == "usb_scan":
+            # Create a specialized USB scanning program
+            self._create_usb_scan_genome()
+        elif self.task_description and len(self.task_description) > 10:
+            # Create a more tailored starter code based on description
+            self._create_description_based_genome()
+        else:
+            # Fall back to classic random genome
+            self._create_random_genome()
+            
+        try:
+            self.ast_tree = ast.parse(self._source_code)
+        except SyntaxError:
+            # Fallback if somehow the generated code is invalid
+            self._source_code = "def fallback():\n    # Task could not be parsed correctly\n    return 0"
+            self.ast_tree = ast.parse(self._source_code)
+            
+        # Store the source code as the accessible code property
+        self.code = self._source_code
     
     def _create_random_genome(self):
         """Create a simple random function as a starting point."""
         # Generate a simple function that returns a random value
         function_name = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for _ in range(5))
         num_params = random.randint(0, 3)
-        param_names = [''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for _ in range(3)) 
+        param_names = [''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for _ in range(3))
                       for _ in range(num_params)]
         params = ", ".join(param_names)
         
         return_value = random.choice([
-            "0", 
-            "1", 
-            "True", 
-            "False", 
-            '"Hello"', 
+            "0",
+            "1",
+            "True",
+            "False",
+            '"Hello"',
             f"{random.randint(0, 100)}"
         ])
         
-        self._source_code = f"def {function_name}({params}):\n    return {return_value}"
-        try:
-            self.ast_tree = ast.parse(self._source_code)
-        except SyntaxError:
-            # Fallback if somehow the generated code is invalid
-            self._source_code = "def fallback():\n    return 0"
-            self.ast_tree = ast.parse(self._source_code)
+        self._source_code = f"# Random starter code\n"
+        if self.task_description:
+            self._source_code += f"# Task: {self.task_description}\n"
+        self._source_code += f"def {function_name}({params}):\n    return {return_value}"
+    
+    def _create_bluetooth_scan_genome(self):
+        """Create specialized starter code for Bluetooth scanning."""
+        self._source_code = """# Bluetooth scanner program
+    import bluetooth
+    
+    def scan_for_devices(duration=10):
+        # Scan for nearby Bluetooth devices
+        print("Scanning for Bluetooth devices...")
+        devices = bluetooth.discover_devices(
+            duration=duration,
+            lookup_names=True
+        )
+        
+        results = []
+        for addr, name in devices:
+            results.append({
+                "address": addr,
+                "name": name
+            })
+        
+        return results
+    
+    def main():
+        devices = scan_for_devices()
+        print(f"Found {len(devices)} devices:")
+        for device in devices:
+            print(f"  {device['name']} - {device['address']}")
+        
+    if __name__ == "__main__":
+        main()
+    """
+        # Add task description as a comment if available
+        if self.task_description:
+            self._source_code = f"# Task: {self.task_description}\n{self._source_code}"
+    
+    def _create_usb_scan_genome(self):
+        """Create specialized starter code for USB scanning."""
+        self._source_code = """# USB device scanner program
+    import usb.core
+    import usb.util
+    
+    def list_usb_devices():
+        # List all connected USB devices
+        print("Scanning for USB devices...")
+        devices = usb.core.find(find_all=True)
+        
+        results = []
+        for device in devices:
+            try:
+                manufacturer = usb.util.get_string(device, device.iManufacturer)
+            except:
+                manufacturer = "Unknown"
+                
+            try:
+                product = usb.util.get_string(device, device.iProduct)
+            except:
+                product = "Unknown"
+                
+            results.append({
+                "vendor_id": device.idVendor,
+                "product_id": device.idProduct,
+                "manufacturer": manufacturer,
+                "product": product
+            })
+        
+        return results
+    
+    def main():
+        devices = list_usb_devices()
+        print(f"Found {len(devices)} USB devices:")
+        for device in devices:
+            print(f"  {device['product']} ({device['manufacturer']}) - "
+                  f"ID: {device['vendor_id']:04x}:{device['product_id']:04x}")
+        
+    if __name__ == "__main__":
+        main()
+    """
+        # Add task description as a comment if available
+        if self.task_description:
+            self._source_code = f"# Task: {self.task_description}\n{self._source_code}"
+    
+    def _create_description_based_genome(self):
+        """Create starter code based on the task description."""
+        words = self.task_description.lower().split()
+        
+        # Extract key terms from description
+        key_terms = [w for w in words if len(w) > 3]
+        if not key_terms:
+            key_terms = ["task"]
+        
+        function_name = f"process_{key_terms[0].replace('.', '').replace(',', '')}"
+        
+        # Generate function parameters based on key terms (up to 3)
+        param_names = []
+        for term in key_terms[1:4]:
+            clean_term = term.replace('.', '').replace(',', '')
+            if clean_term not in function_name and clean_term.isalnum():
+                param_names.append(clean_term)
+        
+        params = ", ".join(param_names) if param_names else "input_data"
+        
+        # Generate a descriptive comment
+        comment = f"# Task: {self.task_description}\n"
+        
+        # Create function body
+        body = "    # TODO: Implement based on task description\n"
+        body += "    result = {}\n"
+        for term in key_terms[:3]:
+            clean_term = term.replace('.', '').replace(',', '')
+            if clean_term not in function_name and clean_term not in param_names and clean_term.isalnum():
+                body += f"    result['{clean_term}'] = True\n"
+        body += "    return result"
+        
+        self._source_code = f"{comment}\ndef {function_name}({params}):\n{body}"
     
     @classmethod
     def from_source(cls, source_code: str) -> 'CodeGenome':

@@ -1,0 +1,3 @@
+2025-05-07 22:14:55,155 - progremon - INFO - Progremon enhanced system initialized
+2025-05-07 22:14:55,156 - progremon - INFO - Parsing request: Create a simple bluetooth scanner...
+2025-05-07 22:14:55,156 - progremon - INFO - Request parsed with task type: bluetooth_scan

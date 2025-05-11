@@ -1,0 +1,12 @@
+{
+  "generation": 1,
+  "best_fitness": 0.5,
+  "avg_fitness": 0.3,
+  "diversity": 0.1,
+  "settings": {
+    "pop_size": 50,
+    "gens": 25,
+    "mutation_rate": 0.15,
+    "crossover_rate": 0.7
+  }
+}

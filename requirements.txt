@@ -1,0 +1,19 @@
+# Enhanced Progremon System Dependencies
+
+# Core dependencies
+# These are required for basic functionality
+colorama>=0.4.4    # For cross-platform terminal colors
+pathlib>=1.0.1     # For platform-independent path handling
+typing>=3.7.4      # For type hints
+pytest>=6.2.5      # For running test suite
+
+# Optional dependencies 
+# These enhance functionality but aren't strictly required
+tqdm>=4.62.0       # For progress bars
+matplotlib>=3.4.3  # For plotting evolution metrics
+pydantic>=1.8.2    # For data validation
+
+# Bluetooth scanning specific dependencies
+# Only needed if using bluetooth scanning functionality
+# For Windows: pybluez>=0.22
+# For Linux: python-bluez>=0.23
