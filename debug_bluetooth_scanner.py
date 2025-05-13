@@ -73,7 +73,7 @@ def main():
 
     # Build the command to run the debug task runner
     cmd = [
-        "python", "trisolaris_debug_runner.py",
+        "python3", "trisolaris_debug_runner.py",
         "bluetooth_scanner",
         f"--gens={args.gens}",
         f"--pop-size={args.pop_size}",

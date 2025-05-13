@@ -199,7 +199,7 @@ def create_initial_population(task: TaskInterface, population_size: int) -> list
                      level=logging.DEBUG)
             
             start_time = time.time()
-            genome.mutate(mutation_rate=mutation_intensity)
+            genome.mutate(rate=mutation_intensity)
             elapsed = time.time() - start_time
             
             debug_log(f"Mutation completed", level=logging.DEBUG, time=elapsed)
@@ -349,7 +349,7 @@ def run_evolution(
     
     # Initialize diversity guardian
     diversity_guardian = DiversityGuardian(
-        threshold=diversity_threshold
+        min_diversity=diversity_threshold
     )
     debug_log(f"Diversity guardian initialized with threshold {diversity_threshold}", level=logging.INFO)
     
