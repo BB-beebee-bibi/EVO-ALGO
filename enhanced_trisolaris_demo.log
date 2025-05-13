@@ -108,3 +108,95 @@ AttributeError: 'ResourceScheduler' object has no attribute 'can_proceed'
 2025-05-13 16:44:17,982 - enhanced_trisolaris_demo - INFO - Initialized population with 500 individuals based on template
 2025-05-13 16:44:17,982 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 1/5
 2025-05-13 16:44:18,084 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 0/500 (0.00%)
+2025-05-13 17:18:07,893 - enhanced_trisolaris_demo - INFO - Population diversity: 0.3219
+2025-05-13 17:18:07,895 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring started
+2025-05-13 17:18:07,895 - trisolaris.core.engine - INFO - Using 7 workers based on resource availability
+2025-05-13 17:18:11,360 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring stopped
+2025-05-13 17:18:11,368 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.594, Avg fitness = 0.5633279999999977, Evaluation time = 3.47s
+2025-05-13 17:18:14,710 - enhanced_trisolaris_demo - INFO - Repairs in generation 1: 0
+2025-05-13 17:18:14,712 - enhanced_trisolaris_demo - INFO - Generation 1 completed in 2036.73 seconds
+2025-05-13 17:18:14,713 - enhanced_trisolaris_demo - INFO - Resource usage: CPU 17.4%, Memory 70.1%
+2025-05-13 17:18:14,713 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 2/5
+2025-05-13 17:18:14,841 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 0/500 (0.00%)
+2025-05-13 17:52:01,172 - enhanced_trisolaris_demo - INFO - Population diversity: 0.3418
+2025-05-13 17:52:01,174 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring started
+2025-05-13 17:52:01,174 - trisolaris.core.engine - INFO - Using 7 workers based on resource availability
+2025-05-13 17:52:03,908 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring stopped
+2025-05-13 17:52:03,909 - trisolaris.core.engine - INFO - Generations without significant improvement: 1/5
+2025-05-13 17:52:03,909 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.594, Avg fitness = 0.5492539999999987, Evaluation time = 2.74s
+2025-05-13 17:52:04,460 - trisolaris.core.genome - WARNING - Failed to unparse AST: Constants inside JoinedStr should be a string.
+2025-05-13 17:52:04,463 - trisolaris.core.genome - WARNING - Failed to unparse AST: Constants inside JoinedStr should be a string.
+2025-05-13 17:52:07,134 - enhanced_trisolaris_demo - INFO - Repairs in generation 2: 0
+2025-05-13 17:52:07,135 - enhanced_trisolaris_demo - INFO - Generation 2 completed in 2032.42 seconds
+2025-05-13 17:52:07,135 - enhanced_trisolaris_demo - INFO - Resource usage: CPU 25.1%, Memory 71.2%
+2025-05-13 17:52:07,135 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 3/5
+2025-05-13 17:52:07,187 - enhanced_trisolaris_demo - ERROR - Error during demonstration: Constants inside JoinedStr should be a string.
+2025-05-13 17:52:07,190 - enhanced_trisolaris_demo - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo.py", line 238, in run_demonstration
+    syntax_errors = self._count_syntax_errors(engine.population)
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo.py", line 344, in _count_syntax_errors
+    source_code = individual.to_source()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/trisolaris/core/genome.py", line 166, in to_source
+    self._source_code = ast.unparse(self.ast_tree)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 1572, in unparse
+    return unparser.visit(ast_obj)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 801, in visit
+    self.traverse(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 795, in traverse
+    super().visit(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 407, in visit
+    return visitor(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 816, in visit_Module
+    self._write_docstring_and_traverse_body(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 807, in _write_docstring_and_traverse_body
+    self.traverse(node.body[1:])
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 793, in traverse
+    self.traverse(item)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 795, in traverse
+    super().visit(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 407, in visit
+    return visitor(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 998, in visit_FunctionDef
+    self._function_helper(node, "def")
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 1016, in _function_helper
+    self._write_docstring_and_traverse_body(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 807, in _write_docstring_and_traverse_body
+    self.traverse(node.body[1:])
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 793, in traverse
+    self.traverse(item)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 795, in traverse
+    super().visit(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 407, in visit
+    return visitor(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 952, in visit_Try
+    self.traverse(ex)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 795, in traverse
+    super().visit(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 407, in visit
+    return visitor(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 971, in visit_ExceptHandler
+    self.traverse(node.body)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 793, in traverse
+    self.traverse(item)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 795, in traverse
+    super().visit(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 407, in visit
+    return visitor(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 831, in visit_Expr
+    self.traverse(node.value)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 795, in traverse
+    super().visit(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 407, in visit
+    return visitor(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 1441, in visit_Call
+    self.traverse(e)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 795, in traverse
+    super().visit(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 407, in visit
+    return visitor(node)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 1136, in visit_JoinedStr
+    meth(value, self.buffer_writer)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ast.py", line 1163, in _fstring_Constant
+    raise ValueError("Constants inside JoinedStr should be a string.")
+ValueError: Constants inside JoinedStr should be a string.
+
