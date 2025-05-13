@@ -1,0 +1,45 @@
+2025-05-13 12:25:02,673 - syntax_aware_evolution_test - INFO - Initialized Syntax-Aware Evolution Test with 10 individuals, 3 generations
+2025-05-13 12:25:02,673 - syntax_aware_evolution_test - INFO - Starting standard evolution process
+2025-05-13 12:25:02,698 - syntax_aware_evolution_test - INFO - Initialized population with 10 individuals based on template
+2025-05-13 12:25:02,698 - syntax_aware_evolution_test - INFO - Standard Evolution - Generation 1/3
+2025-05-13 12:25:02,709 - syntax_aware_evolution_test - INFO - Syntax errors before evolution: 10/10
+2025-05-13 12:25:02,826 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.39000000000000007
+2025-05-13 12:25:02,853 - syntax_aware_evolution_test - INFO - Standard Evolution - Generation 2/3
+2025-05-13 12:25:02,864 - syntax_aware_evolution_test - INFO - Syntax errors before evolution: 10/10
+2025-05-13 12:25:02,978 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.39000000000000007
+2025-05-13 12:25:03,006 - syntax_aware_evolution_test - INFO - Standard Evolution - Generation 3/3
+2025-05-13 12:25:03,017 - syntax_aware_evolution_test - INFO - Syntax errors before evolution: 10/10
+2025-05-13 12:25:03,130 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.39000000000000007
+2025-05-13 12:25:03,130 - syntax_aware_evolution_test - INFO - Standard evolution process complete
+2025-05-13 12:25:03,130 - syntax_aware_evolution_test - INFO - Starting syntax-aware evolution process
+2025-05-13 12:25:03,379 - syntax_aware_evolution_test - INFO - Initialized population with 10 individuals based on template
+2025-05-13 12:25:03,380 - syntax_aware_evolution_test - INFO - Syntax-Aware Evolution - Generation 1/3
+2025-05-13 12:25:03,393 - syntax_aware_evolution_test - INFO - Syntax errors before evolution: 10/10
+2025-05-13 12:25:03,511 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.39000000000000007
+2025-05-13 12:25:03,537 - syntax_aware_evolution_test - INFO - Repairs in generation 1: 0
+2025-05-13 12:25:03,537 - syntax_aware_evolution_test - INFO - Syntax-Aware Evolution - Generation 2/3
+2025-05-13 12:25:03,548 - syntax_aware_evolution_test - INFO - Syntax errors before evolution: 10/10
+2025-05-13 12:25:03,667 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.39000000000000007
+2025-05-13 12:25:03,695 - syntax_aware_evolution_test - INFO - Repairs in generation 2: 0
+2025-05-13 12:25:03,695 - syntax_aware_evolution_test - INFO - Syntax-Aware Evolution - Generation 3/3
+2025-05-13 12:25:03,706 - syntax_aware_evolution_test - INFO - Syntax errors before evolution: 10/10
+2025-05-13 12:25:03,831 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.39000000000000007
+2025-05-13 12:25:03,831 - syntax_aware_evolution_test - INFO - Repairs in generation 3: 0
+2025-05-13 12:25:03,832 - syntax_aware_evolution_test - INFO - Syntax-aware evolution process complete. Total repairs: 0
+2025-05-13 12:25:03,832 - syntax_aware_evolution_test - INFO - Generating visualizations
+2025-05-13 12:25:03,969 - syntax_aware_evolution_test - ERROR - Error during test: x and y must have same first dimension, but have shapes (3,) and (6,)
+2025-05-13 12:25:03,974 - syntax_aware_evolution_test - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_syntax_aware_evolution.py", line 326, in run_test
+    self.visualize_results()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_syntax_aware_evolution.py", line 286, in visualize_results
+    plt.plot(generations, self.metrics['standard']['avg_fitness_per_generation'], 'r-', label='Standard Evolution')
+  File "/Users/rap_charles/Library/Python/3.9/lib/python/site-packages/matplotlib/pyplot.py", line 3794, in plot
+    return gca().plot(
+  File "/Users/rap_charles/Library/Python/3.9/lib/python/site-packages/matplotlib/axes/_axes.py", line 1779, in plot
+    lines = [*self._get_lines(self, *args, data=data, **kwargs)]
+  File "/Users/rap_charles/Library/Python/3.9/lib/python/site-packages/matplotlib/axes/_base.py", line 296, in __call__
+    yield from self._plot_args(
+  File "/Users/rap_charles/Library/Python/3.9/lib/python/site-packages/matplotlib/axes/_base.py", line 486, in _plot_args
+    raise ValueError(f"x and y must have same first dimension, but "
+ValueError: x and y must have same first dimension, but have shapes (3,) and (6,)
+

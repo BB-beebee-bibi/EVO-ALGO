@@ -1,0 +1,31 @@
+2025-05-13 13:34:41,216 - simple_trisolaris_demo - INFO - Initialized Simple TRISOLARIS Demonstration with 20 individuals, 5 generations
+2025-05-13 13:34:41,216 - trisolaris.core.engine - ERROR - Failed to initialize sandbox: __init__() got an unexpected keyword argument 'max_cpu_percent'
+2025-05-13 13:34:41,774 - simple_trisolaris_demo - INFO - Initialized population with 20 individuals based on template
+2025-05-13 13:34:41,774 - simple_trisolaris_demo - INFO - Simple Evolution - Generation 1/5
+2025-05-13 13:34:41,799 - simple_trisolaris_demo - INFO - Syntax errors before evolution: 20/20
+2025-05-13 13:34:41,814 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.3899999999999999, Evaluation time = 0.01s
+2025-05-13 13:34:41,867 - simple_trisolaris_demo - INFO - Generation 1 completed in 0.09 seconds
+2025-05-13 13:34:41,867 - simple_trisolaris_demo - INFO - Simple Evolution - Generation 2/5
+2025-05-13 13:34:41,889 - simple_trisolaris_demo - INFO - Syntax errors before evolution: 20/20
+2025-05-13 13:34:41,891 - trisolaris.core.engine - INFO - Generations without significant improvement: 1/3
+2025-05-13 13:34:41,891 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.3899999999999999, Evaluation time = 0.00s
+2025-05-13 13:34:41,942 - simple_trisolaris_demo - INFO - Generation 2 completed in 0.08 seconds
+2025-05-13 13:34:41,942 - simple_trisolaris_demo - INFO - Simple Evolution - Generation 3/5
+2025-05-13 13:34:41,964 - simple_trisolaris_demo - INFO - Syntax errors before evolution: 20/20
+2025-05-13 13:34:41,965 - trisolaris.core.engine - INFO - Generations without significant improvement: 2/3
+2025-05-13 13:34:41,965 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.3899999999999999, Evaluation time = 0.00s
+2025-05-13 13:34:42,016 - simple_trisolaris_demo - INFO - Generation 3 completed in 0.07 seconds
+2025-05-13 13:34:42,016 - simple_trisolaris_demo - INFO - Simple Evolution - Generation 4/5
+2025-05-13 13:34:42,039 - simple_trisolaris_demo - INFO - Syntax errors before evolution: 20/20
+2025-05-13 13:34:42,040 - trisolaris.core.engine - INFO - Generations without significant improvement: 3/3
+2025-05-13 13:34:42,040 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.3899999999999999, Evaluation time = 0.00s
+2025-05-13 13:34:42,095 - simple_trisolaris_demo - INFO - Generation 4 completed in 0.08 seconds
+2025-05-13 13:34:42,095 - simple_trisolaris_demo - INFO - Simple Evolution - Generation 5/5
+2025-05-13 13:34:42,117 - simple_trisolaris_demo - INFO - Syntax errors before evolution: 20/20
+2025-05-13 13:34:42,118 - trisolaris.core.engine - INFO - Generations without significant improvement: 4/3
+2025-05-13 13:34:42,118 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.39, Avg fitness = 0.3899999999999999, Evaluation time = 0.00s
+2025-05-13 13:34:42,118 - simple_trisolaris_demo - INFO - Generation 5 completed in 0.02 seconds
+2025-05-13 13:34:42,118 - simple_trisolaris_demo - INFO - Demonstration completed in 0.90 seconds
+2025-05-13 13:34:42,118 - simple_trisolaris_demo - INFO - Generating visualizations
+2025-05-13 13:34:42,429 - simple_trisolaris_demo - INFO - Visualizations saved to demo_output/evolution_metrics.png
+2025-05-13 13:34:42,429 - simple_trisolaris_demo - INFO - Metrics saved to demo_output/evolution_metrics.json

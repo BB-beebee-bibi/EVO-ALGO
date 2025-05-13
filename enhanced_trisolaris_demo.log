@@ -1,0 +1,36 @@
+2025-05-13 13:29:46,799 - trisolaris.visualization - WARNING - Interactive visualization dependencies not found. Install plotly for interactive visualizations.
+2025-05-13 13:29:46,801 - enhanced_trisolaris_demo - WARNING - Enhanced visualization components not available. Falling back to basic visualizations.
+2025-05-13 13:29:46,802 - enhanced_trisolaris_demo - INFO - Initialized Enhanced TRISOLARIS Demonstration with 20 individuals, 5 generations
+2025-05-13 13:29:46,803 - trisolaris.core.engine - ERROR - Failed to initialize sandbox: __init__() got an unexpected keyword argument 'max_cpu_percent'
+2025-05-13 13:29:47,352 - enhanced_trisolaris_demo - INFO - Initialized population with 20 individuals based on template
+2025-05-13 13:29:47,352 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 1/5
+2025-05-13 13:29:47,378 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 20/20
+2025-05-13 13:29:47,378 - enhanced_trisolaris_demo - ERROR - Error during demonstration: 'ResourceScheduler' object has no attribute 'can_proceed'
+2025-05-13 13:29:47,379 - enhanced_trisolaris_demo - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo.py", line 231, in run_demonstration
+    self._evolve_one_generation(engine, generation)
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo.py", line 304, in _evolve_one_generation
+    engine.evaluate_population()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/trisolaris/core/engine.py", line 166, in evaluate_population
+    if self.resource_monitor and not self.resource_monitor.can_proceed():
+AttributeError: 'ResourceScheduler' object has no attribute 'can_proceed'
+
+2025-05-13 13:32:50,433 - trisolaris.visualization - WARNING - Interactive visualization dependencies not found. Install plotly for interactive visualizations.
+2025-05-13 13:32:50,433 - enhanced_trisolaris_demo - WARNING - Enhanced visualization components not available. Falling back to basic visualizations.
+2025-05-13 13:32:50,434 - enhanced_trisolaris_demo - INFO - Initialized Enhanced TRISOLARIS Demonstration with 20 individuals, 5 generations
+2025-05-13 13:32:50,434 - trisolaris.core.engine - ERROR - Failed to initialize sandbox: __init__() got an unexpected keyword argument 'max_cpu_percent'
+2025-05-13 13:32:50,933 - enhanced_trisolaris_demo - INFO - Initialized population with 20 individuals based on template
+2025-05-13 13:32:50,934 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 1/5
+2025-05-13 13:32:50,959 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 20/20
+2025-05-13 13:32:50,959 - enhanced_trisolaris_demo - ERROR - Error during demonstration: 'ResourceScheduler' object has no attribute 'can_proceed'
+2025-05-13 13:32:50,960 - enhanced_trisolaris_demo - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo_fixed.py", line 249, in run_demonstration
+    self._evolve_one_generation(engine, generation)
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo_fixed.py", line 322, in _evolve_one_generation
+    engine.evaluate_population()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo_fixed.py", line 225, in patched_evaluate_population
+    return original_evaluate_population()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/trisolaris/core/engine.py", line 166, in evaluate_population
+    if self.resource_monitor and not self.resource_monitor.can_proceed():
+AttributeError: 'ResourceScheduler' object has no attribute 'can_proceed'
+

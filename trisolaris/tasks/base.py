@@ -7,6 +7,7 @@ must implement to be compatible with the framework.
 
 import abc
 from typing import Dict, Any, Tuple, List, Optional, Callable
+from trisolaris.config import get_config, BaseConfig
 
 class TrisolarisBoundary:
     """Constants defining ethical boundary types."""
@@ -33,6 +34,20 @@ class TaskInterface(abc.ABC):
     This interface defines the contract that all tasks must implement
     to be evolvable by the TRISOLARIS framework.
     """
+    
+    def __init__(self, config: Optional[BaseConfig] = None, component_name: str = "task", run_id: Optional[str] = None):
+        """
+        Initialize the task interface.
+        
+        Args:
+            config: Configuration object (if None, will be loaded from global config)
+            component_name: Name of this component for configuration lookup
+            run_id: Optional run ID for configuration lookup
+        """
+        # Load configuration
+        self.config = config or get_config(component_name, run_id)
+        self.component_name = component_name
+        self.run_id = run_id
     
     @abc.abstractmethod
     def get_name(self) -> str:
@@ -86,12 +101,16 @@ class TaskInterface(abc.ABC):
         Returns:
             A dictionary mapping boundary names to their parameters
         """
-        return {
-            TrisolarisBoundary.NO_EVAL_EXEC: {},
-            TrisolarisBoundary.NO_NETWORK_ACCESS: {},
-            TrisolarisBoundary.MAX_EXECUTION_TIME: {"max_execution_time": 5.0},
-            TrisolarisBoundary.MAX_MEMORY_USAGE: {"max_memory_usage": 100}
-        }
+        # Use configuration if available, otherwise use defaults
+        if hasattr(self.config.ethical_boundaries, 'boundaries') and self.config.ethical_boundaries.boundaries:
+            return self.config.ethical_boundaries.boundaries
+        else:
+            return {
+                TrisolarisBoundary.NO_EVAL_EXEC: {},
+                TrisolarisBoundary.NO_NETWORK_ACCESS: {},
+                TrisolarisBoundary.MAX_EXECUTION_TIME: {"max_execution_time": 5.0},
+                TrisolarisBoundary.MAX_MEMORY_USAGE: {"max_memory_usage": 100}
+            }
     
     def get_fitness_weights(self) -> Dict[str, float]:
         """
@@ -100,11 +119,15 @@ class TaskInterface(abc.ABC):
         Returns:
             A dictionary mapping fitness component names to their weights
         """
-        return {
-            "functionality": 0.7,
-            "efficiency": 0.2,
-            "alignment": 0.1
-        }
+        # Use configuration if available, otherwise use defaults
+        if hasattr(self.config.task, 'fitness_weights') and self.config.task.fitness_weights:
+            return self.config.task.fitness_weights
+        else:
+            return {
+                "functionality": 0.7,
+                "efficiency": 0.2,
+                "alignment": 0.1
+            }
     
     def get_allowed_imports(self) -> List[str]:
         """
@@ -113,8 +136,12 @@ class TaskInterface(abc.ABC):
         Returns:
             A list of allowed import module names
         """
-        return ["os", "sys", "time", "random", "math", "json", 
-                "datetime", "collections", "re", "logging"]
+        # Use configuration if available, otherwise use defaults
+        if hasattr(self.config.task, 'allowed_imports') and self.config.task.allowed_imports:
+            return self.config.task.allowed_imports
+        else:
+            return ["os", "sys", "time", "random", "math", "json",
+                    "datetime", "collections", "re", "logging"]
     
     def get_evolution_params(self) -> Dict[str, Any]:
         """
@@ -123,12 +150,16 @@ class TaskInterface(abc.ABC):
         Returns:
             A dictionary of parameters for the evolution process
         """
-        return {
-            "population_size": 20,
-            "num_generations": 10,
-            "mutation_rate": 0.1,
-            "crossover_rate": 0.7
-        }
+        # Use configuration if available, otherwise use defaults
+        if hasattr(self.config.task, 'evolution_params') and self.config.task.evolution_params:
+            return self.config.task.evolution_params
+        else:
+            return {
+                "population_size": 20,
+                "num_generations": 10,
+                "mutation_rate": 0.1,
+                "crossover_rate": 0.7
+            }
     
     def post_process(self, source_code: str) -> str:
         """
@@ -144,3 +175,12 @@ class TaskInterface(abc.ABC):
             The post-processed source code
         """
         return source_code
+        
+    def update_config(self, config: BaseConfig) -> None:
+        """
+        Update the task's configuration.
+        
+        Args:
+            config: New configuration object
+        """
+        self.config = config

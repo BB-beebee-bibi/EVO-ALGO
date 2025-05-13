@@ -10,6 +10,8 @@ import tracemalloc
 import inspect
 import re
 import ast
+import functools
+import hashlib
 from typing import List, Dict, Any, Callable, Tuple, Optional, Union
 import logging
 
@@ -25,15 +27,19 @@ class FitnessEvaluator:
     balancing functional correctness, ethical alignment, and resource efficiency.
     """
     
-    def __init__(self, 
-                ethical_filter=None, 
-                weights=None):
+    def __init__(self,
+                ethical_filter=None,
+                weights=None,
+                use_caching=True,
+                cache_size=1000):
         """
         Initialize the Fitness Evaluator.
         
         Args:
             ethical_filter: Optional EthicalBoundaryEnforcer for pre-filtering solutions
             weights: Optional dictionary of weights for different objectives
+            use_caching: Whether to use caching for fitness evaluations
+            cache_size: Maximum number of entries in the cache
         """
         # Ethical boundary enforcer (optional)
         self.ethical_filter = ethical_filter
@@ -64,6 +70,14 @@ class FitnessEvaluator:
             'max_execution_time': 1.0,  # seconds
             'max_memory_usage': 100,    # MB
         }
+        
+        # Caching settings
+        self.use_caching = use_caching
+        self.cache_size = cache_size
+        self._fitness_cache = {}
+        self._alignment_cache = {}
+        self._functionality_cache = {}
+        self._efficiency_cache = {}
         
         # Alignment measures with default measures based on universal principles
         self.alignment_measures = [
@@ -192,6 +206,12 @@ class FitnessEvaluator:
         Returns:
             Combined fitness score
         """
+        # Check if we have a cached result
+        if self.use_caching:
+            cache_key = self._get_genome_hash(genome)
+            if cache_key in self._fitness_cache:
+                return self._fitness_cache[cache_key]
+        
         # Check ethical boundaries if filter is available
         if self.ethical_filter and not self.ethical_filter.check(genome):
             return float('-inf')  # Automatic disqualification
@@ -213,7 +233,51 @@ class FitnessEvaluator:
                     f"alignment={alignment_score:.4f}, efficiency={efficiency_score:.4f}, "
                     f"combined={combined_score:.4f}")
         
+        # Cache the result if caching is enabled
+        if self.use_caching:
+            self._fitness_cache[cache_key] = combined_score
+            # Prune cache if it's too large
+            if len(self._fitness_cache) > self.cache_size:
+                self._prune_cache(self._fitness_cache)
+        
         return combined_score
+    
+    def _get_genome_hash(self, genome) -> str:
+        """
+        Generate a hash for a genome to use as a cache key.
+        
+        Args:
+            genome: The genome to hash
+            
+        Returns:
+            Hash string
+        """
+        try:
+            if hasattr(genome, 'to_source'):
+                source_code = genome.to_source()
+            else:
+                source_code = str(genome)
+            return hashlib.md5(source_code.encode('utf-8')).hexdigest()
+        except Exception as e:
+            logger.warning(f"Error generating genome hash: {str(e)}")
+            # Fallback to object ID if hashing fails
+            return str(id(genome))
+    
+    def _prune_cache(self, cache):
+        """
+        Prune a cache to keep it under the size limit.
+        
+        Args:
+            cache: The cache dictionary to prune
+        """
+        if len(cache) <= self.cache_size:
+            return
+        
+        # Remove random entries to bring cache down to 75% of max size
+        target_size = int(self.cache_size * 0.75)
+        keys_to_remove = list(cache.keys())[target_size:]
+        for key in keys_to_remove:
+            del cache[key]
     
     def _evaluate_functionality(self, genome) -> float:
         """
@@ -225,6 +289,12 @@ class FitnessEvaluator:
         Returns:
             Functionality score (0-1)
         """
+        # Check cache first if enabled
+        if self.use_caching:
+            cache_key = self._get_genome_hash(genome)
+            if cache_key in self._functionality_cache:
+                return self._functionality_cache[cache_key]
+        
         if not self.test_cases:
             return 0.5  # Neutral score if no test cases are defined
         
@@ -262,7 +332,16 @@ class FitnessEvaluator:
                 weighted_score += 0.0
         
         # Normalize score
-        return weighted_score / total_weight if total_weight > 0 else 0.0
+        result = weighted_score / total_weight if total_weight > 0 else 0.0
+        
+        # Cache the result if caching is enabled
+        if self.use_caching:
+            self._functionality_cache[cache_key] = result
+            # Prune cache if it's too large
+            if len(self._functionality_cache) > self.cache_size:
+                self._prune_cache(self._functionality_cache)
+        
+        return result
     
     def _evaluate_alignment(self, genome) -> float:
         """
@@ -274,6 +353,12 @@ class FitnessEvaluator:
         Returns:
             Alignment score (0-1)
         """
+        # Check cache first if enabled
+        if self.use_caching:
+            cache_key = self._get_genome_hash(genome)
+            if cache_key in self._alignment_cache:
+                return self._alignment_cache[cache_key]
+        
         if not self.alignment_measures:
             return 0.5  # Neutral score if no alignment measures are defined
         
@@ -296,7 +381,16 @@ class FitnessEvaluator:
                 weighted_score += 0.0
         
         # Normalize score
-        return weighted_score / total_weight if total_weight > 0 else 0.0
+        result = weighted_score / total_weight if total_weight > 0 else 0.0
+        
+        # Cache the result if caching is enabled
+        if self.use_caching:
+            self._alignment_cache[cache_key] = result
+            # Prune cache if it's too large
+            if len(self._alignment_cache) > self.cache_size:
+                self._prune_cache(self._alignment_cache)
+        
+        return result
     
     def _evaluate_efficiency(self, genome) -> float:
         """
@@ -308,6 +402,12 @@ class FitnessEvaluator:
         Returns:
             Efficiency score (0-1)
         """
+        # Check cache first if enabled
+        if self.use_caching:
+            cache_key = self._get_genome_hash(genome)
+            if cache_key in self._efficiency_cache:
+                return self._efficiency_cache[cache_key]
+        
         # Get executable function from genome
         try:
             exec_func = self._get_executable_function(genome)
@@ -324,7 +424,16 @@ class FitnessEvaluator:
         memory_score = self._measure_memory_usage(exec_func)
         
         # Combine metrics
-        return 0.5 * (time_score + memory_score)
+        result = 0.5 * (time_score + memory_score)
+        
+        # Cache the result if caching is enabled
+        if self.use_caching:
+            self._efficiency_cache[cache_key] = result
+            # Prune cache if it's too large
+            if len(self._efficiency_cache) > self.cache_size:
+                self._prune_cache(self._efficiency_cache)
+        
+        return result
     
     def _measure_execution_time(self, func) -> float:
         """
@@ -1066,4 +1175,23 @@ class FitnessEvaluator:
             },
             'test_results': test_results,
             'objective_weights': self.weights
-        } 
+        }
+    
+    def clear_caches(self):
+        """Clear all caches to free memory."""
+        self._fitness_cache.clear()
+        self._alignment_cache.clear()
+        self._functionality_cache.clear()
+        self._efficiency_cache.clear()
+        logger.info("All fitness evaluation caches cleared")
+    
+    def get_cache_stats(self):
+        """Get statistics about the cache usage."""
+        return {
+            'fitness_cache_size': len(self._fitness_cache),
+            'alignment_cache_size': len(self._alignment_cache),
+            'functionality_cache_size': len(self._functionality_cache),
+            'efficiency_cache_size': len(self._efficiency_cache),
+            'cache_enabled': self.use_caching,
+            'max_cache_size': self.cache_size
+        }

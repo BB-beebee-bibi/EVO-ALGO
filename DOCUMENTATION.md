@@ -8,33 +8,75 @@ Originally developed under the directory name EVO-ALGO, the project has evolved 
 
 The Progrémon project represents a significant step toward autonomous program evolution guided by clearly defined constraints and objectives. It combines cutting-edge evolutionary algorithms with strict ethical boundaries and resource-aware execution to create practical, efficient, and safe software solutions.
 
+Recent architectural enhancements have integrated rigorous mathematical foundations from evolutionary theory, implemented a secure sandboxed evolution environment, and developed a comprehensive post-evolution ethical evaluation system. These components work together to create a robust framework that bridges theoretical evolutionary principles with practical implementation.
+
 ## Component Architecture
 
 ### Trisolaris Evolutionary Engine
 
 Trisolaris is the core evolutionary computation framework that powers the Progrémon project. Named as a reference to the science fiction novel "The Three-Body Problem" by Liu Cixin, it implements sophisticated evolutionary algorithms to generate, evaluate, and refine code solutions.
 
-The Trisolaris engine consists of several key components:
+The Trisolaris engine consists of several key components that work together in a bidirectional manner:
 
-1. **Adaptive Landscape Navigator**: Models fitness landscapes for code evolution, allowing visualization and efficient traversal of the solution space. Implements mathematical models from evolutionary theory to guide the search process.
+1. **Mathematical Foundation**: Implements rigorous evolutionary theory principles including:
+   - **Price Equation**: Decomposes evolutionary change into selection and transmission components
+   - **Fisher's Fundamental Theorem**: Predicts the rate of fitness increase based on genetic variance
+   - **Selection Gradients**: Guides evolution toward promising regions of the solution space
 
-2. **Genome Repository**: Provides versioned storage of code genomes using Git integration, with phylogenetic tracking of solution lineages. Maintains archives of both successful and failed variants.
+2. **Adaptive Landscape Navigator**: Models fitness landscapes for code evolution, allowing visualization and efficient traversal of the solution space. Uses mathematical models from evolutionary theory to guide the search process and adapt to changing fitness landscapes.
 
-3. **Ethical Boundary Enforcer**: Implements hard filters for static analysis before fitness evaluation. Enforces inviolable principles as constraints, not just preferences.
+3. **Sandboxed Evolution Environment**: Provides a secure, isolated environment for code evolution with:
+   - Resource monitoring and constraints (CPU, memory, execution time)
+   - File system isolation and simulated access
+   - Network isolation and simulated connections
+   - Process isolation and security boundaries
 
-4. **Island Ecosystem Manager**: Maintains multiple subpopulations with different selection pressures and enables cross-pollination between islands.
+4. **Post-Evolution Ethical Evaluation**: Implements a multi-layered approach to ensure evolved code meets ethical standards:
+   - Syntax checking and functionality verification
+   - Ethical assessment against principles of privacy, security, fairness, transparency, and accountability
+   - Gurbani alignment evaluation
 
-5. **Resource Steward**: Monitors system resources and maintains ≥25% availability, dynamically adjusting evolution pace based on resource availability.
+5. **Genome Repository**: Provides versioned storage of code genomes using Git integration, with phylogenetic tracking of solution lineages. Maintains archives of both successful and failed variants.
 
-6. **Diversity Guardian**: Tracks population metrics and implements strategies to maintain genetic diversity.
+6. **Island Ecosystem Manager**: Maintains multiple subpopulations with different selection pressures and enables cross-pollination between islands.
 
-7. **Evolution Monitor & Visualizer**: Provides tools for tracking evolution progress and visualizing results.
+7. **Resource Steward**: Monitors system resources and maintains ≥25% availability, dynamically adjusting evolution pace based on resource availability.
 
-8. **Task Interface**: Defines a generic interface for evolvable tasks.
+8. **Diversity Guardian**: Tracks population metrics and implements strategies to maintain genetic diversity.
+
+9. **Evolution Monitor & Visualizer**: Provides tools for tracking evolution progress and visualizing results.
+
+10. **Task Interface**: Defines a generic interface for evolvable tasks.
+
+#### Component Interactions
+
+The Trisolaris engine components interact bidirectionally, creating a sophisticated feedback system:
+
+1. **Mathematical Foundation ↔ Evolution Engine**
+   - Mathematical models guide selection pressure and fitness evaluation
+   - Evolution results feed back to refine mathematical models
+   - Price equation decomposes evolutionary change to inform next generations
+   - Fisher's theorem predicts rate of fitness increase to optimize evolution parameters
+
+2. **Sandboxed Environment ↔ Evolution Engine**
+   - Sandbox provides safe execution environment for candidate solutions
+   - Resource usage data feeds back to evolution engine to optimize resource efficiency
+   - Evolution engine adapts to sandbox constraints
+
+3. **Ethical Evaluation ↔ Evolution Engine**
+   - Post-evolution ethical assessment filters solutions
+   - Ethical evaluation results feed back to guide future evolution
+   - Multi-layered approach ensures solutions meet all requirements
 
 ### Progrémon Programs
 
-Progrémons are the specialized programs generated by the Trisolaris evolutionary engine. Each Progrémon is evolved to perform a specific task, optimized through generations of selection and refinement. The current implementation includes several types of Progrémons:
+Progrémons are the specialized programs generated by the Trisolaris evolutionary engine. Each Progrémon is evolved to perform a specific task, optimized through generations of selection and refinement. 
+
+The Progrémon interface serves as the primary way users interact with the system. Users input requirements and constraints through this interface, which then translates these inputs into mathematical selection environments that guide the evolution process. This translation process is a key innovation that allows non-technical users to harness the power of evolutionary computation.
+
+For example, when a user requests "a network scanner that identifies IoT devices but doesn't attempt to access them," the Progrémon interface translates this into specific selection pressures and fitness landscape parameters that guide the evolution toward solutions meeting these requirements.
+
+The current implementation includes several types of Progrémons:
 
 1. **Drive Scanner Progrémon**: Scans connected storage devices, creates detailed snapshots of drive contents, and identifies file types and organizes information.
 
@@ -44,7 +86,55 @@ Progrémons are the specialized programs generated by the Trisolaris evolutionar
 
 ## Theoretical Foundations
 
-The Trisolaris framework implements key concepts from evolutionary theory:
+The Trisolaris framework implements key concepts from evolutionary theory, now with a rigorous mathematical foundation:
+
+### Price Equation Implementation
+
+The Price equation is a fundamental mathematical theorem that describes how trait values change from one generation to the next. It decomposes evolutionary change into two components:
+
+1. **Selection Component**: Covariance between fitness and trait value
+2. **Transmission Component**: Expected value of fitness times change in trait value
+
+Mathematically expressed as: ΔZ = Cov(w, z)/w̄ + E(w·Δz)/w̄
+
+Where:
+- ΔZ is the change in the average value of trait z
+- w is fitness
+- z is the trait value
+- w̄ is the average fitness
+- Cov(w, z) is the covariance between fitness and trait value
+- E(w·Δz) is the expected value of the product of fitness and the change in trait value
+
+**Technical Implementation**: The Trisolaris engine uses the Price equation to analyze how code traits (such as function length, complexity, or specific patterns) change across generations. This allows the system to understand which traits are being selected for and which are being selected against, providing insights into the evolutionary dynamics.
+
+**Practical Example**: When evolving a network scanner, the Price equation helps decompose the evolutionary change into:
+- Selection for code patterns that efficiently identify devices
+- Selection against code patterns that attempt to access devices
+- Transmission of beneficial traits to the next generation
+
+**Non-Technical Explanation**: Think of the Price equation like a recipe analyzer that tells you which ingredients in your dish are making people like it more (selection component) and how those ingredients change when you adjust the recipe slightly (transmission component). This helps the system understand which parts of the code are working well and should be kept, and which parts need to be changed.
+
+### Fisher's Fundamental Theorem
+
+Fisher's Fundamental Theorem of Natural Selection states that the rate of increase in fitness of a population at any time is equal to the genetic variance in fitness at that time.
+
+Mathematically expressed as: ΔW = VA/W
+
+Where:
+- ΔW is the rate of increase in fitness
+- VA is the additive genetic variance in fitness
+- W is the mean fitness
+
+**Technical Implementation**: The Trisolaris engine uses Fisher's theorem to predict how quickly the fitness of the population will increase, which helps optimize evolution parameters such as population size, mutation rate, and selection pressure.
+
+**Practical Example**: When evolving a drive scanner that preserves user privacy, Fisher's theorem helps predict:
+- Rate of improvement for snapshot functionality
+- Optimal balance between thoroughness and privacy preservation
+- Expected number of generations needed to reach a target fitness level
+
+**Non-Technical Explanation**: Fisher's theorem is like a progress predictor that tells you how quickly your solutions will improve based on how much variety you have in your current set of solutions. More variety (genetic variance) means faster improvement, which helps the system decide how many different approaches to try in parallel.
+
+### Additional Evolutionary Concepts
 
 1. **Fitness Landscapes and Adaptive Walks**: Mathematical models that represent the relationship between genotypes (code structures) and their fitness (performance). The framework navigates these landscapes to find optimal solutions.
 
@@ -55,6 +145,8 @@ The Trisolaris framework implements key concepts from evolutionary theory:
 4. **Exploration-Exploitation Trade-offs**: Balancing the search for new, potentially better solutions (exploration) with refining existing good solutions (exploitation).
 
 5. **Population Genetics Principles**: Concepts from biological evolution applied to code evolution, including genetic drift, gene flow between islands, and selection pressure.
+
+### Framework Priorities
 
 The framework operates on three fundamental priorities:
 
@@ -71,23 +163,60 @@ The framework operates on three fundamental priorities:
 
 ## Ethical Boundaries
 
-The Trisolaris framework places a strong emphasis on ethical boundaries in evolved code. The Ethical Boundary Enforcer component implements hard constraints that all solutions must satisfy before they can be evaluated for fitness.
+The Trisolaris framework has evolved from pre-evolution ethical constraints to a comprehensive post-evolution ethical evaluation system. This multi-layered approach ensures that evolved code meets high ethical standards while still allowing for creative evolution.
 
-Key ethical boundaries include:
+### Post-Evolution Ethical Evaluation System
 
-1. **Safety First**: Evolve code within strict ethical boundaries to prevent harmful operations.
-2. **Resource Awareness**: Adapt to available system resources and maintain system responsiveness.
-3. **Privacy Protection**: Prevent access to sensitive information and ensure data protection.
-4. **Security Focus**: Block potentially malicious operations and enforce secure coding practices.
-5. **Inclusive Design**: Ensure solutions are accessible and respectful to all users.
+The post-evolution ethical evaluation system consists of three main layers:
 
-The ethical filter can be configured at different levels:
+1. **Syntax Checking**
+   - Verifies that the evolved code is syntactically valid
+   - Ensures the code can be parsed and executed
+   - Prevents runtime errors and exceptions
 
-- **None**: No ethical filtering (not recommended for production)
-- **Basic**: Essential safety and security checks
-- **Full**: Comprehensive ethical boundary enforcement
+2. **Functionality Verification**
+   - Confirms that the code performs its intended function
+   - Validates against test cases and requirements
+   - Ensures the solution actually solves the given problem
 
-The ethical boundaries are inspired by Gurbani principles, emphasizing service to others, truthfulness, and resource harmony.
+3. **Ethical Assessment**
+   - Evaluates code against ethical principles:
+     - **Privacy**: Respects user data and prevents unauthorized access
+     - **Security**: Follows secure coding practices and prevents vulnerabilities
+     - **Fairness**: Treats all users equitably and avoids bias
+     - **Transparency**: Makes operations clear and understandable
+     - **Accountability**: Ensures actions can be traced and explained
+   - Checks alignment with Gurbani principles:
+     - Service to others rather than self-interest
+     - Truthful and transparent design
+     - Resource harmony and mindfulness
+     - Inclusive and respectful language
+
+### Practical Examples
+
+**Example 1: Network Scanner**
+
+When evaluating a network scanner Progrémon, the ethical evaluation system:
+- Verifies the code can correctly identify devices (functionality)
+- Ensures it doesn't attempt to access devices without permission (privacy)
+- Confirms it doesn't store or transmit sensitive information (security)
+- Checks that it treats all device types equally (fairness)
+- Validates that it clearly reports what it's doing (transparency)
+
+**Technical Explanation**: The system uses static analysis to identify code patterns that might violate privacy, such as attempts to access device data beyond basic identification. It also checks for secure coding practices like input validation and proper error handling.
+
+**Non-Technical Explanation**: Think of the ethical evaluation like a security checkpoint that ensures the evolved program follows the rules. It checks that the program only looks at what it's allowed to look at, doesn't try to access private information, and is honest about what it's doing.
+
+### Feedback Loop to Evolution
+
+A key innovation in the post-evolution ethical evaluation system is the feedback loop to the evolution process. When ethical issues are identified:
+
+1. The specific concerns are documented and categorized
+2. This information feeds back into the evolution process
+3. Future generations are guided away from problematic patterns
+4. The system learns over time which approaches are ethically sound
+
+This creates a self-improving system that becomes increasingly adept at generating ethical solutions.
 
 ## Task System
 
@@ -179,14 +308,136 @@ For debugging and performance monitoring, use one of the task-specific debug scr
 ./debug_bluetooth_scanner.py --use-islands --islands=3 --debug-level=verbose
 ```
 
+## System Architecture Diagram
+
+```
+                                 TRISOLARIS FRAMEWORK
+                                 ===================
+                                         |
+                +--------------------+    |    +----------------------+
+                |                    |<-->|<-->|                      |
+                | MATHEMATICAL       |    |    | SANDBOXED            |
+                | FOUNDATION         |    |    | ENVIRONMENT          |
+                |                    |    |    |                      |
+                | - Price Equation   |    |    | - Resource Limits    |
+                | - Fisher's Theorem |    |    | - File System Access |
+                | - Selection        |    |    | - Network Simulation |
+                |   Gradients        |    |    | - Process Isolation  |
+                |                    |    |    |                      |
+                +--------+-----------+    |    +-----------+----------+
+                         ^                |                ^
+                         |                |                |
+                         v                v                v
+                +--------------------------------------------------+
+                |                                                  |
+                |               EVOLUTION ENGINE                   |
+                |                                                  |
+                | +----------------+  +------------------------+   |
+                | | Population     |  | Fitness Evaluation     |   |
+                | | Management     |  | & Selection            |   |
+                | +----------------+  +------------------------+   |
+                |                                                  |
+                +----------------------+---------------------------+
+                                       ^
+                                       |
+                                       v
+                +--------------------------------------------------+
+                |                                                  |
+                |         POST-EVOLUTION ETHICAL EVALUATION        |
+                |                                                  |
+                | +----------------+  +------------------------+   |
+                | | Syntax &       |  | Ethical Assessment     |   |
+                | | Functionality  |  | - Privacy, Security    |   |
+                | | Verification   |  | - Fairness, Transparency|  |
+                | |                |  | - Accountability       |   |
+                | |                |  | - Gurbani Alignment    |   |
+                | +----------------+  +------------------------+   |
+                |                                                  |
+                +----------------------+---------------------------+
+                                       ^
+                                       |
+                                       v
+                                 +-----------+
+                                 | Progrémon |
+                                 +-----------+
+                                       ^
+                                       |
+                                       v
+                                 +-----------+
+                                 |   User    |
+                                 +-----------+
+```
+
+## Evolution Workflow Diagram
+
+```
++-------------+     +-------------------+     +----------------------+
+|             |     |                   |     |                      |
+|    User     +---->+    Progrémon      +---->+  Task Definition    |
+|             |     |    Interface      |     |                      |
++-------------+     +-------------------+     +----------+-----------+
+                                                         |
+                                                         v
++-------------------+     +-------------------+     +----+-------------+
+|                   |     |                   |     |                  |
+| Fitness Landscape <-----+ Mathematical      <-----+ Selection        |
+| Visualization     |     | Foundation        |     | Criteria         |
+|                   |     |                   |     |                  |
++--------+----------+     +---+---------------+     +------------------+
+         |                    ^
+         v                    |
++--------+----------+     +---+---------------+     +------------------+
+|                   |     |                   |     |                  |
+| Initial Population+---->+ Evolution Engine  +---->+ Sandbox          |
+| Generation        |     |                   |     | Environment      |
+|                   |     |                   |     |                  |
++-------------------+     +---+---------------+     +--------+---------+
+                              ^                              |
+                              |                              v
++-------------------+     +---+---------------+     +--------+---------+
+|                   |     |                   |     |                  |
+| Diversity         +---->+ Population        <-----+ Resource         |
+| Management        |     | Management        |     | Monitoring       |
+|                   |     |                   |     |                  |
++-------------------+     +---+---------------+     +------------------+
+                              |
+                              v
++-------------------+     +---+---------------+     +------------------+
+|                   |     |                   |     |                  |
+| Fitness           <-----+ Candidate         +---->+ Syntax           |
+| Evaluation        |     | Solutions         |     | Checking         |
+|                   |     |                   |     |                  |
++-------------------+     +---+---------------+     +--------+---------+
+                              |                              |
+                              v                              v
++-------------------+     +---+---------------+     +--------+---------+
+|                   |     |                   |     |                  |
+| Ethical           <-----+ Post-Evolution    <-----+ Functionality    |
+| Assessment        |     | Evaluation        |     | Verification     |
+|                   |     |                   |     |                  |
++-------------------+     +---+---------------+     +------------------+
+                              |
+                              v
++-------------------+     +---+---------------+
+|                   |     |                   |
+| Feedback Loop     +---->+ Final Progrémon   |
+| to Evolution      |     | Solution          |
+|                   |     |                   |
++-------------------+     +-------------------+
+```
+
 ## Glossary
 
 | Term | Definition |
 |------|------------|
-| **Progrémon** | A specialized program generated by the Trisolaris evolutionary engine, evolved to perform a specific task. |
+| **Progrémon** | A specialized program generated by the Trisolaris evolutionary engine, evolved to perform a specific task. Also refers to the user-facing interface for inputting requirements. |
 | **Trisolaris** | The evolutionary computation framework that powers the Progrémon project, named after the science fiction novel "The Three-Body Problem". |
+| **Price Equation** | A mathematical theorem that decomposes evolutionary change into selection and transmission components. |
+| **Fisher's Theorem** | A fundamental theorem stating that the rate of increase in fitness equals the genetic variance in fitness. |
 | **Adaptive Landscape** | A mathematical model that represents the relationship between code structures and their fitness or performance. |
 | **Code Genome** | A representation of code as a manipulable data structure (AST or graph) that can undergo mutation and crossover operations. |
+| **Sandboxed Environment** | A secure, isolated execution environment that prevents harmful operations while allowing safe evolution. |
+| **Post-Evolution Ethical Evaluation** | A multi-layered system that assesses evolved code for syntax correctness, functionality, and ethical compliance. |
 | **Ethical Boundary Enforcer** | A component that implements hard constraints that all solutions must satisfy before they can be evaluated for fitness. |
 | **Fitness Evaluation** | The process of assessing how well a solution performs against defined criteria. |
 | **Island Model** | An evolutionary approach that maintains multiple subpopulations with different selection pressures. |
@@ -197,3 +448,5 @@ For debugging and performance monitoring, use one of the task-specific debug scr
 | **Resource Steward** | A component that monitors system resources and adjusts the evolution process accordingly. |
 | **Diversity Guardian** | A component that tracks population metrics and implements strategies to maintain genetic diversity. |
 | **Evolution Monitor** | A tool for tracking evolution progress and visualizing results. |
+| **Selection Gradient** | The direction and magnitude of selection acting on different traits. |
+| **Gurbani Alignment** | Evaluation of solutions against ethical principles derived from Gurbani teachings. |

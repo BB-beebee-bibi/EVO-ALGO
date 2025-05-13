@@ -8,11 +8,17 @@ in the form of code snippets or programs.
 import random
 import copy
 import ast
+import logging
 from typing import Tuple, List, Dict, Any, Optional, Union
 import os
 
 # Import modern AST utilities for Python 3.8+ compatibility
 from trisolaris.core.ast_utils import ModernMutationTransformer, ModernAstCrossover, ModernSubtreeCollector
+from trisolaris.core.syntax_validator import SyntaxValidator
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class CodeGenome:
     """
@@ -196,6 +202,9 @@ class CodeGenome:
         
         # The source code is now outdated
         self._source_code = None
+        
+        # Validate and repair the code after mutation
+        self._validate_and_repair_code()
     
     def crossover(self, other: 'CodeGenome') -> Tuple['CodeGenome', 'CodeGenome']:
         """
@@ -232,8 +241,15 @@ class CodeGenome:
             crossover_operator = AstCrossover()
             child1_ast, child2_ast = crossover_operator.crossover(child1_ast, child2_ast)
             
-            # Create and return new genomes
-            return CodeGenome(ast_tree=child1_ast), CodeGenome(ast_tree=child2_ast)
+            # Create new genomes
+            child1 = CodeGenome(ast_tree=child1_ast)
+            child2 = CodeGenome(ast_tree=child2_ast)
+            
+            # Validate and repair the code after crossover
+            child1._validate_and_repair_code()
+            child2._validate_and_repair_code()
+            
+            return child1, child2
         else:
             # Fallback to source-level crossover if AST is not available
             src1 = self.to_source().split('\n')
@@ -245,7 +261,15 @@ class CodeGenome:
             child1_src = '\n'.join(src1[:crossover_point] + src2[crossover_point:])
             child2_src = '\n'.join(src2[:crossover_point] + src1[crossover_point:])
             
-            return CodeGenome(source_code=child1_src), CodeGenome(source_code=child2_src)
+            # Create new genomes
+            child1 = CodeGenome(source_code=child1_src)
+            child2 = CodeGenome(source_code=child2_src)
+            
+            # Validate and repair the code after crossover
+            child1._validate_and_repair_code()
+            child2._validate_and_repair_code()
+            
+            return child1, child2
 
 
 class AstMutator:
@@ -328,3 +352,64 @@ class SubtreeCollector(ast.NodeVisitor):
         self.modern_collector.visit(node)
         # Update our reference to the modern collector's subtrees
         self.subtrees = self.modern_collector.subtrees
+
+
+class SyntaxAwareCodeGenome(CodeGenome):
+    """
+    An extension of CodeGenome that is syntax-aware and ensures
+    that all genetic operations produce syntactically valid code.
+    """
+    
+    def __init__(self, ast_tree=None, source_code=None):
+        """Initialize a new SyntaxAwareCodeGenome."""
+        super().__init__(ast_tree, source_code)
+        self._validate_and_repair_code()
+    
+    def _validate_and_repair_code(self):
+        """Validate and repair the code if necessary."""
+        if not self._source_code and self.ast_tree:
+            try:
+                self._source_code = ast.unparse(self.ast_tree)
+            except Exception as e:
+                logger.warning(f"Failed to unparse AST: {e}")
+                return
+        
+        if self._source_code:
+            valid_code, was_valid, repairs = SyntaxValidator.validate_and_repair(self._source_code)
+            
+            if not was_valid and repairs:
+                logger.info(f"Repaired code with {len(repairs)} fixes: {', '.join(repairs)}")
+                self._source_code = valid_code
+                
+                # Update AST with repaired code
+                try:
+                    self.ast_tree = ast.parse(self._source_code)
+                except SyntaxError:
+                    logger.warning("Failed to parse repaired code")
+
+
+# Add _validate_and_repair_code method to the original CodeGenome class
+def _validate_and_repair_code(self):
+    """Validate and repair the code if necessary."""
+    if not self._source_code and self.ast_tree:
+        try:
+            self._source_code = ast.unparse(self.ast_tree)
+        except Exception as e:
+            logger.warning(f"Failed to unparse AST: {e}")
+            return
+    
+    if self._source_code:
+        valid_code, was_valid, repairs = SyntaxValidator.validate_and_repair(self._source_code)
+        
+        if not was_valid and repairs:
+            logger.info(f"Repaired code with {len(repairs)} fixes: {', '.join(repairs)}")
+            self._source_code = valid_code
+            
+            # Update AST with repaired code
+            try:
+                self.ast_tree = ast.parse(self._source_code)
+            except SyntaxError:
+                logger.warning("Failed to parse repaired code")
+
+# Add the method to the CodeGenome class
+CodeGenome._validate_and_repair_code = _validate_and_repair_code

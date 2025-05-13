@@ -1,10 +1,15 @@
 """
 Ethical Boundary Enforcer for the TRISOLARIS framework.
 
-This module implements strict ethical filters that enforce boundaries on what
+This module implements ethical filters that enforce boundaries on what
 evolved code can do, ensuring it operates within safe and ethical constraints.
 It provides multiple layers of protection to prevent harmful code generation
 and execution, with a focus on safety, ethics, and responsible AI development.
+
+The module now implements a post-evolution ethical evaluation approach,
+which evaluates code after it has been evolved rather than constraining
+the evolution process itself. This allows for more creative evolution
+while still ensuring ethical compliance.
 """
 
 import ast
@@ -12,7 +17,15 @@ import re
 import logging
 import inspect
 import os
-from typing import List, Dict, Set, Optional, Any, Callable, Union
+import time
+import functools
+import hashlib
+from typing import List, Dict, Set, Optional, Any, Callable, Union, Tuple
+
+# Import the new post-evolution evaluation components
+from trisolaris.evaluation.syntax_checker import check_syntax, check_functionality, measure_output
+from trisolaris.evaluation.ethics_client import evaluate_ethics, parse_ethics_report, check_gurbani_alignment
+from trisolaris.config import get_config, BaseConfig
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -27,13 +40,28 @@ class EthicalBoundaryEnforcer:
     multiple layers of protection through both pattern-based and AST-based analysis.
     """
     
-    def __init__(self):
-        """Initialize the ethical boundary enforcer."""
+    def __init__(self, config: Optional[BaseConfig] = None, component_name: str = "ethical_boundaries", run_id: Optional[str] = None):
+        """
+        Initialize the ethical boundary enforcer.
+        
+        Args:
+            config: Configuration object (if None, will be loaded from global config)
+            component_name: Name of this component for configuration lookup
+            run_id: Optional run ID for configuration lookup
+        """
+        # Load configuration
+        self.config = config or get_config(component_name, run_id)
+        self.component_name = component_name
+        self.run_id = run_id
+        
+        # Initialize from configuration
         self.boundaries = {}
         self.boundary_results = {}
         self.violation_history = []
+        self.use_post_evolution = self.config.ethical_boundaries.use_post_evolution
+        self.evaluation_cache = {}
         
-        # Define standard boundary checks
+        # Define standard boundary checks (for backward compatibility)
         self._standard_boundaries = {
             # Safety-critical boundaries
             "no_system_calls": self._check_no_system_calls,
@@ -45,18 +73,164 @@ class EthicalBoundaryEnforcer:
             "max_memory_usage": self._check_max_memory_usage,
             "sandboxed_execution": self._check_sandboxed_execution
         }
+        
+        logger.info(f"Initialized EthicalBoundaryEnforcer with post-evolution mode: {use_post_evolution}")
     
     def check(self, genome) -> bool:
         """
-        Check if a genome passes all ethical boundaries. This is an alias for check_all_boundaries.
+        Check if a genome passes all ethical boundaries.
+        
+        In post-evolution mode, this performs a comprehensive ethical evaluation
+        of the code after evolution. In pre-evolution mode (legacy), this is an
+        alias for check_all_boundaries.
         
         Args:
             genome: The genome to check
             
         Returns:
-            True if all boundaries pass, False otherwise
+            True if all ethical checks pass, False otherwise
         """
-        return self.check_all_boundaries(genome)
+        if self.use_post_evolution:
+            return self.evaluate_post_evolution(genome)
+        else:
+            return self.check_all_boundaries(genome)
+    
+    def evaluate_post_evolution(self, genome) -> bool:
+        """
+        Perform post-evolution ethical evaluation on a genome.
+        
+        This method evaluates the code after evolution using syntax checking,
+        functionality verification, and ethical evaluation via the ethics client.
+        
+        Args:
+            genome: The genome to evaluate
+            
+        Returns:
+            True if the genome passes all post-evolution checks, False otherwise
+        """
+        try:
+            source = genome.to_source()
+            
+            # Check for cached evaluation result
+            cache_key = self._get_cache_key(source)
+            if cache_key in self.evaluation_cache:
+                logger.info(f"Using cached ethical evaluation result for genome")
+                return self.evaluation_cache[cache_key]
+            
+            # Step 1: Check syntax
+            syntax_valid, syntax_error = check_syntax(source)
+            if not syntax_valid:
+                logger.warning(f"Genome failed syntax check: {syntax_error}")
+                self._record_violation("syntax_error", source, syntax_error)
+                self.evaluation_cache[cache_key] = False
+                return False
+            
+            # Step 2: Check functionality
+            # Create a mock task for now - in a real implementation, this would be passed in
+            mock_task = {"type": "generic", "expected_outputs": {}}
+            functionality_valid, functionality_error = check_functionality(source, mock_task)
+            if not functionality_valid:
+                logger.warning(f"Genome failed functionality check: {functionality_error}")
+                self._record_violation("functionality_error", source, functionality_error)
+                self.evaluation_cache[cache_key] = False
+                return False
+            
+            # Step 3: Parse AST for ethical evaluation
+            try:
+                tree = ast.parse(source)
+            except SyntaxError as e:
+                logger.warning(f"Failed to parse AST for ethical evaluation: {str(e)}")
+                self._record_violation("ast_parse_error", source, str(e))
+                self.evaluation_cache[cache_key] = False
+                return False
+            
+            # Step 4: Evaluate ethics
+            try:
+                ethics_report = evaluate_ethics(source, tree)
+                parsed_report = parse_ethics_report(ethics_report)
+                
+                # Log the ethics evaluation
+                logger.info(f"Ethics evaluation completed with score: {parsed_report['overall_score']}")
+                for category, score in parsed_report['category_scores'].items():
+                    logger.info(f"Ethics category '{category}' score: {score}")
+                
+                # Check if the code passes the ethics evaluation
+                if not parsed_report['passed']:
+                    logger.warning(f"Genome failed ethics evaluation with score: {parsed_report['overall_score']}")
+                    for concern in parsed_report['concerns']:
+                        logger.warning(f"Ethics concern: {concern['category']} - {concern['description']} (Severity: {concern['severity']})")
+                    
+                    self._record_violation("ethics_violation", source, f"Failed ethics evaluation with score: {parsed_report['overall_score']}")
+                    self.evaluation_cache[cache_key] = False
+                    return False
+                
+                # Step 5: Check Gurbani alignment
+                is_aligned, alignment_score, concerns = check_gurbani_alignment(parsed_report)
+                if not is_aligned:
+                    logger.warning(f"Genome failed Gurbani alignment check with score: {alignment_score}")
+                    for concern in concerns:
+                        logger.warning(f"Gurbani alignment concern: {concern}")
+                    
+                    self._record_violation("gurbani_alignment", source, f"Failed Gurbani alignment with score: {alignment_score}")
+                    self.evaluation_cache[cache_key] = False
+                    return False
+                
+                # All checks passed
+                logger.info("Genome passed all post-evolution ethical checks")
+                self.evaluation_cache[cache_key] = True
+                return True
+                
+            except Exception as e:
+                logger.error(f"Error during ethics evaluation: {str(e)}")
+                self._record_violation("ethics_evaluation_error", source, str(e))
+                self.evaluation_cache[cache_key] = False
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error during post-evolution evaluation: {str(e)}")
+            return False
+    
+    def _get_cache_key(self, source: str) -> str:
+        """
+        Generate a cache key for a source code string.
+        
+        Args:
+            source: Source code string
+            
+        Returns:
+            Cache key as a string
+        """
+        return hashlib.md5(source.encode()).hexdigest()
+    
+    def _record_violation(self, violation_type: str, source: str, details: str) -> None:
+        """
+        Record an ethical violation for logging and tracking.
+        
+        Args:
+            violation_type: Type of violation
+            source: Source code that caused the violation
+            details: Details about the violation
+        """
+        self.violation_history.append({
+            'type': violation_type,
+            'details': details,
+            'timestamp': time.time(),
+            'source_excerpt': source[:200] + ('...' if len(source) > 200 else '')
+        })
+    
+    def clear_evaluation_cache(self) -> None:
+        """Clear the evaluation cache."""
+        self.evaluation_cache = {}
+        logger.info("Evaluation cache cleared")
+    
+    def get_evaluation_cache_size(self) -> int:
+        """
+        Get the current size of the evaluation cache.
+        
+        Returns:
+            Number of entries in the cache
+        """
+        return len(self.evaluation_cache)
     
     def add_boundary(self, boundary_name: str, **kwargs) -> None:
         """
@@ -66,11 +240,18 @@ class EthicalBoundaryEnforcer:
             boundary_name: Name of the boundary to add
             **kwargs: Parameters for the boundary check
         """
+        if self.use_post_evolution:
+            logger.warning("Adding pre-evolution boundary while in post-evolution mode")
+            
         if boundary_name in self._standard_boundaries:
             self.boundaries[boundary_name] = {
                 'check': self._standard_boundaries[boundary_name],
                 'params': kwargs
             }
+            # Update configuration to reflect this boundary
+            if not hasattr(self.config.ethical_boundaries, 'boundaries'):
+                self.config.ethical_boundaries.boundaries = {}
+            self.config.ethical_boundaries.boundaries[boundary_name] = kwargs
             logger.info(f"Added boundary: {boundary_name}")
         else:
             logger.error(f"Unknown boundary: {boundary_name}")
@@ -84,6 +265,9 @@ class EthicalBoundaryEnforcer:
             check_function: Function that implements the check
             **kwargs: Parameters for the check function
         """
+        if self.use_post_evolution:
+            logger.warning("Adding custom pre-evolution boundary while in post-evolution mode")
+            
         self.boundaries[name] = {
             'check': check_function,
             'params': kwargs
@@ -94,12 +278,16 @@ class EthicalBoundaryEnforcer:
         """
         Check if a genome satisfies all defined ethical boundaries.
         
+        This is the legacy pre-evolution approach.
+        
         Args:
             genome: The genome to check
             
         Returns:
             True if all boundaries are satisfied, False otherwise
         """
+        if self.use_post_evolution:
+            logger.warning("Using pre-evolution boundary checks while in post-evolution mode")
         self.boundary_results = {}
         all_passed = True
         
@@ -409,8 +597,8 @@ class EthicalBoundaryEnforcer:
             allowed_imports: Set of allowed import module names
         """
         if allowed_imports is None:
-            # Default allowed imports from standard library
-            allowed_imports = {'typing', 'collections', 'datetime', 'math', 'random', 're', 'time', 'json', 'sys', 'os'}
+            # Use allowed imports from configuration
+            allowed_imports = self.config.ethical_boundaries.allowed_imports
         
         try:
             tree = ast.parse(source)
@@ -658,3 +846,24 @@ class EthicalBoundaryEnforcer:
             return False
         
         return True
+        
+    def update_config(self, config: BaseConfig) -> None:
+        """
+        Update the enforcer's configuration.
+        
+        Args:
+            config: New configuration object
+        """
+        self.config = config
+        
+        # Update parameters from configuration
+        self.use_post_evolution = self.config.ethical_boundaries.use_post_evolution
+        
+        # Update boundaries from configuration if they exist
+        if hasattr(self.config.ethical_boundaries, 'boundaries') and self.config.ethical_boundaries.boundaries:
+            for boundary_name, params in self.config.ethical_boundaries.boundaries.items():
+                if boundary_name in self._standard_boundaries:
+                    self.boundaries[boundary_name] = {
+                        'check': self._standard_boundaries[boundary_name],
+                        'params': params
+                    }

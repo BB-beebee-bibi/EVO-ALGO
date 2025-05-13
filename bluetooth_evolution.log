@@ -1,0 +1,855 @@
+2025-05-13 12:01:43,621 - bluetooth_evolution_test - INFO - Initialized Bluetooth Evolution Test with 20 individuals, 5 generations
+2025-05-13 12:01:43,621 - bluetooth_evolution_test - INFO - Setting up sandboxed environment
+2025-05-13 12:01:43,621 - trisolaris.environment.sandbox - INFO - Initialized sandbox environment at test_output/sandbox
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethics_client - INFO - Initialized ethics service client with base URL: http://localhost:8000
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethical_filter - INFO - Initialized EthicalBoundaryEnforcer with post-evolution mode: True
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: no_eval_exec
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_execution_time
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:01:43,655 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_memory_usage
+2025-05-13 12:01:43,655 - bluetooth_evolution_test - ERROR - Error during test: __init__() got an unexpected keyword argument 'task'
+2025-05-13 12:01:43,655 - bluetooth_evolution_test - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_bluetooth_evolution.py", line 404, in run_test
+    self.setup_environment()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_bluetooth_evolution.py", line 153, in setup_environment
+    self.engine = EvolutionEngine(
+TypeError: __init__() got an unexpected keyword argument 'task'
+
+2025-05-13 12:01:43,655 - trisolaris.environment.sandbox - INFO - Preserved sandbox environment at test_output/sandbox
+2025-05-13 12:02:22,605 - bluetooth_evolution_test - INFO - Initialized Bluetooth Evolution Test with 20 individuals, 5 generations
+2025-05-13 12:02:22,605 - bluetooth_evolution_test - INFO - Setting up sandboxed environment
+2025-05-13 12:02:22,605 - trisolaris.environment.sandbox - INFO - Initialized sandbox environment at test_output/sandbox
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethics_client - INFO - Initialized ethics service client with base URL: http://localhost:8000
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethical_filter - INFO - Initialized EthicalBoundaryEnforcer with post-evolution mode: True
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: no_eval_exec
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_execution_time
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:02:22,638 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_memory_usage
+2025-05-13 12:02:22,638 - bluetooth_evolution_test - ERROR - Error during test: __init__() got an unexpected keyword argument 'sandbox'
+2025-05-13 12:02:22,639 - bluetooth_evolution_test - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_bluetooth_evolution.py", line 403, in run_test
+    self.setup_environment()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_bluetooth_evolution.py", line 153, in setup_environment
+    self.engine = EvolutionEngine(
+TypeError: __init__() got an unexpected keyword argument 'sandbox'
+
+2025-05-13 12:02:22,639 - trisolaris.environment.sandbox - INFO - Preserved sandbox environment at test_output/sandbox
+2025-05-13 12:03:32,016 - bluetooth_evolution_test - INFO - Initialized Bluetooth Evolution Test with 20 individuals, 5 generations
+2025-05-13 12:03:32,016 - bluetooth_evolution_test - INFO - Setting up sandboxed environment
+2025-05-13 12:03:32,017 - trisolaris.environment.sandbox - INFO - Initialized sandbox environment at test_output/sandbox
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethics_client - INFO - Initialized ethics service client with base URL: http://localhost:8000
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethical_filter - INFO - Initialized EthicalBoundaryEnforcer with post-evolution mode: True
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: no_eval_exec
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_execution_time
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:03:32,057 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_memory_usage
+2025-05-13 12:03:32,057 - bluetooth_evolution_test - ERROR - Error during test: __init__() got an unexpected keyword argument 'num_generations'
+2025-05-13 12:03:32,057 - bluetooth_evolution_test - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_bluetooth_evolution.py", line 407, in run_test
+    self.setup_environment()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/test_bluetooth_evolution.py", line 153, in setup_environment
+    self.engine = EvolutionEngine(
+TypeError: __init__() got an unexpected keyword argument 'num_generations'
+
+2025-05-13 12:03:32,057 - trisolaris.environment.sandbox - INFO - Preserved sandbox environment at test_output/sandbox
+2025-05-13 12:04:19,306 - bluetooth_evolution_test - INFO - Initialized Bluetooth Evolution Test with 20 individuals, 5 generations
+2025-05-13 12:04:19,306 - bluetooth_evolution_test - INFO - Setting up sandboxed environment
+2025-05-13 12:04:19,306 - trisolaris.environment.sandbox - INFO - Initialized sandbox environment at test_output/sandbox
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethics_client - INFO - Initialized ethics service client with base URL: http://localhost:8000
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethical_filter - INFO - Initialized EthicalBoundaryEnforcer with post-evolution mode: True
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: no_eval_exec
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_execution_time
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethical_filter - WARNING - Adding pre-evolution boundary while in post-evolution mode
+2025-05-13 12:04:19,338 - trisolaris.evaluation.ethical_filter - INFO - Added boundary: max_memory_usage
+2025-05-13 12:04:19,338 - trisolaris.environment.sandbox - INFO - Initialized sandbox environment at test_output/sandbox
+2025-05-13 12:04:19,339 - trisolaris.environment.simulator - INFO - Initialized resource simulator for sandbox at test_output/sandbox
+2025-05-13 12:04:19,339 - trisolaris.core.engine - INFO - Initialized sandbox environment at test_output/sandbox
+2025-05-13 12:04:19,339 - bluetooth_evolution_test - INFO - Environment setup complete
+2025-05-13 12:04:19,339 - bluetooth_evolution_test - INFO - Starting evolution process
+2025-05-13 12:04:19,445 - bluetooth_evolution_test - INFO - Initialized population with 50 individuals based on template
+2025-05-13 12:04:19,445 - bluetooth_evolution_test - INFO - Generation 1/5
+2025-05-13 12:04:19,446 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:19,447 - trisolaris.evaluation.syntax_checker - WARNING - Syntax check failed: Syntax error at line 626, column 16: EOL while scanning string literal
+2025-05-13 12:04:19,447 - trisolaris.evaluation.ethical_filter - WARNING - Genome failed syntax check: Syntax error at line 626, column 16: EOL while scanning string literal
+2025-05-13 12:04:20,061 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:20,063 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:20,063 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:20,680 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:20,681 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:20,681 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:21,295 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:21,297 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:21,297 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:21,908 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:21,908 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:21,909 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:22,520 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:22,520 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:22,520 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:23,129 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:23,130 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:23,131 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:23,746 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:23,746 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:23,747 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:24,361 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:24,362 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:24,362 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:24,976 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:24,977 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:24,977 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:25,594 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:25,595 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:25,596 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:26,210 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:26,211 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:26,211 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:26,826 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:26,827 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:26,827 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:27,445 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:27,446 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:27,446 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:28,063 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:28,064 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:28,064 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:28,679 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:28,680 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:28,680 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:29,296 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:29,297 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:29,298 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:29,915 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:29,915 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:29,915 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:30,537 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:30,538 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:30,538 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:31,163 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:31,164 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:31,164 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:31,782 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:31,783 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:31,783 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:32,398 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:32,399 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:32,399 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:33,025 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:33,026 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:33,026 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:33,636 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:33,637 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:33,637 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:34,255 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:34,255 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:34,256 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:34,901 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:34,901 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:34,901 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:35,511 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:35,512 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:35,512 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:36,130 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:36,131 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:36,131 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:36,743 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:36,744 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:36,744 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:37,379 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:37,379 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:37,379 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:37,996 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:37,997 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:37,997 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:38,615 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:38,616 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:38,616 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:39,240 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:39,241 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:39,241 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:39,871 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:39,872 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:39,872 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:40,494 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:40,495 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:40,495 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:41,114 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:41,115 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:41,115 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:41,738 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:41,738 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:41,739 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:42,361 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:42,362 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:42,362 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:42,979 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:42,980 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:42,981 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:43,597 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:43,598 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:43,598 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:44,212 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:44,212 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:44,213 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:44,826 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:44,826 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:44,827 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:45,451 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:45,452 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:45,452 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:46,080 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:46,081 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:46,081 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:46,696 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:46,697 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:46,697 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:47,315 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:47,316 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:47,316 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:47,943 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:47,943 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:47,943 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:48,564 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:48,566 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:48,566 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:49,181 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:49,182 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:49,183 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:49,821 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:49,821 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:49,822 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:50,449 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:50,449 - trisolaris.core.engine - INFO - Generation 0: Best fitness = -inf, Avg fitness = 0
+2025-05-13 12:04:50,826 - bluetooth_evolution_test - INFO - Generation 1: Best fitness = -inf, Avg fitness = -inf
+2025-05-13 12:04:50,827 - bluetooth_evolution_test - INFO - Generation 2/5
+2025-05-13 12:04:50,827 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:50,827 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:51,446 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:51,447 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:51,447 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:52,067 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:52,068 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:52,068 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:52,692 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:52,693 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:52,693 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:53,318 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:53,319 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:53,319 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:53,932 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:53,933 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:53,933 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:54,559 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:54,561 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:54,561 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:55,184 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:55,185 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:55,185 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:55,810 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:55,811 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:55,811 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:56,425 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:56,425 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:56,426 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:57,049 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:57,050 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:57,050 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:57,673 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:57,673 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:57,674 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:58,290 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:58,291 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:58,291 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:58,914 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:58,915 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:58,915 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:04:59,536 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:04:59,537 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:04:59,538 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:00,164 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:00,165 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:00,166 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:00,777 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:00,778 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:00,778 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:01,401 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:01,402 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:01,402 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:02,010 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:02,011 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:02,011 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:02,634 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:02,634 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:02,635 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:03,263 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:03,264 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:03,264 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:03,873 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:03,874 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:03,874 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:04,499 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:04,500 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:04,500 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:05,117 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:05,118 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:05,118 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:05,746 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:05,747 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:05,747 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:06,358 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:06,359 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:06,359 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:06,981 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:06,982 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:06,982 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:07,600 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:07,600 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:07,601 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:08,217 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:08,218 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:08,218 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:08,832 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:08,833 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:08,833 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:09,442 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:09,443 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:09,444 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:10,064 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:10,065 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:10,066 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:10,692 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:10,693 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:10,693 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:11,315 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:11,316 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:11,316 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:11,928 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:11,930 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:11,930 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:12,556 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:12,557 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:12,557 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:13,176 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:13,176 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:13,176 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:13,798 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:13,799 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:13,799 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:14,408 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:14,409 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:14,409 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:15,032 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:15,033 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:15,033 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:15,647 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:15,647 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:15,648 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:16,275 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:16,275 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:16,275 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:16,899 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:16,900 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:16,900 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:17,525 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:17,526 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:17,526 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:18,147 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:18,148 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:18,149 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:18,763 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:18,764 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:18,764 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:19,388 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:19,388 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:19,388 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:20,009 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:20,009 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:20,009 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:20,621 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:20,622 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:20,622 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:21,245 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:21,245 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:21,245 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:21,860 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:21,861 - trisolaris.core.engine - INFO - Generation 0: Best fitness = -inf, Avg fitness = 0
+2025-05-13 12:05:22,286 - bluetooth_evolution_test - INFO - Generation 2: Best fitness = -inf, Avg fitness = -inf
+2025-05-13 12:05:22,286 - bluetooth_evolution_test - INFO - Generation 3/5
+2025-05-13 12:05:22,287 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:22,287 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:22,906 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:22,907 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:22,907 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:23,531 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:23,532 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:23,532 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:24,140 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:24,140 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:24,140 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:24,755 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:24,756 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:24,756 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:25,374 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:25,375 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:25,375 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:25,984 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:25,985 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:25,985 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:26,604 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:26,605 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:26,605 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:27,230 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:27,231 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:27,231 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:27,849 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:27,849 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:27,850 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:28,474 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:28,474 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:28,474 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:29,097 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:29,098 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:29,098 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:29,723 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:29,724 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:29,724 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:30,348 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:30,349 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:30,349 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:30,965 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:30,965 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:30,965 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:31,592 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:31,593 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:31,593 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:32,211 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:32,212 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:32,212 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:32,839 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:32,840 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:32,840 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:33,461 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:33,463 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:33,463 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:34,082 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:34,083 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:34,083 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:34,706 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:34,706 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:34,706 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:35,325 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:35,326 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:35,326 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:35,948 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:35,949 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:35,949 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:36,563 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:36,563 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:36,563 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:37,181 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:37,182 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:37,182 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:37,815 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:37,816 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:37,816 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:38,425 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:38,426 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:38,426 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:39,044 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:39,044 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:39,045 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:39,661 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:39,663 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:39,663 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:40,287 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:40,288 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:40,288 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:40,913 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:40,914 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:40,914 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:41,536 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:41,537 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:41,537 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:42,152 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:42,153 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:42,153 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:42,779 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:42,781 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:42,782 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:43,412 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:43,413 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:43,413 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:44,034 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:44,035 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:44,035 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:44,652 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:44,654 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:44,654 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:45,284 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:45,284 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:45,284 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:45,906 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:45,906 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:45,907 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:46,530 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:46,531 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:46,531 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:47,150 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:47,151 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:47,151 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:47,784 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:47,785 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:47,785 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:48,411 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:48,412 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:48,412 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:49,050 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:49,052 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:49,052 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:49,664 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:49,664 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:49,665 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:50,285 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:50,287 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:50,288 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:50,897 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:50,897 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:50,897 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:51,515 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:51,515 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:51,515 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:52,131 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:52,132 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:52,132 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:52,751 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:52,752 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:52,752 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:53,377 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:53,378 - trisolaris.core.engine - INFO - Generation 0: Best fitness = -inf, Avg fitness = 0
+2025-05-13 12:05:53,740 - bluetooth_evolution_test - INFO - Generation 3: Best fitness = -inf, Avg fitness = -inf
+2025-05-13 12:05:53,741 - bluetooth_evolution_test - INFO - Generation 4/5
+2025-05-13 12:05:53,741 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:53,741 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:54,368 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:54,368 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:54,368 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:54,982 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:54,983 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:54,983 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:55,624 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:55,625 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:55,625 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:56,241 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:56,242 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:56,242 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:56,873 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:56,873 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:56,874 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:57,500 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:57,501 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:57,501 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:58,117 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:58,118 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:58,118 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:58,730 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:58,731 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:58,731 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:59,359 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:59,361 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:59,362 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:05:59,972 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:05:59,972 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:05:59,973 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:00,589 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:00,590 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:00,590 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:01,210 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:01,211 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:01,211 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:01,837 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:01,838 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:01,838 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:02,454 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:02,455 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:02,455 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:03,107 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:03,107 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:03,107 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:03,738 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:03,738 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:03,738 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:04,365 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:04,368 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:04,368 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:04,994 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:04,999 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:05,000 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:05,626 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:05,630 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:05,631 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:06,245 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:06,246 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:06,246 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:06,861 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:06,863 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:06,863 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:07,491 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:07,492 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:07,492 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:08,111 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:08,112 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:08,112 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:08,739 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:08,741 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:08,742 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:09,365 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:09,365 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:09,366 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:09,977 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:09,978 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:09,978 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:10,599 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:10,599 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:10,599 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:11,217 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:11,219 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:11,219 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:11,831 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:11,832 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:11,832 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:12,441 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:12,441 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:12,441 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:13,060 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:13,063 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:13,065 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:13,681 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:13,682 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:13,682 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:14,296 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:14,298 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:14,298 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:14,905 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:14,906 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:14,906 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:15,522 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:15,523 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:15,523 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:16,146 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:16,147 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:16,147 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:16,794 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:16,796 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:16,796 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:17,416 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:17,417 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:17,417 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:18,044 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:18,046 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:18,046 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:18,663 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:18,664 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:18,664 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:19,285 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:19,285 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:19,286 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:19,896 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:19,897 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:19,898 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:20,509 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:20,510 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:20,510 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:21,147 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:21,147 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:21,148 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:21,774 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:21,776 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:21,777 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:22,397 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:22,398 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:22,398 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:23,025 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:23,026 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:23,028 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:23,648 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:23,650 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:23,651 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:24,273 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:24,274 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:24,274 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:24,898 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:24,898 - trisolaris.core.engine - INFO - Generation 0: Best fitness = -inf, Avg fitness = 0
+2025-05-13 12:06:25,285 - bluetooth_evolution_test - INFO - Generation 4: Best fitness = -inf, Avg fitness = -inf
+2025-05-13 12:06:25,285 - bluetooth_evolution_test - INFO - Generation 5/5
+2025-05-13 12:06:25,286 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:25,286 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:25,904 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:25,905 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:25,905 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:26,515 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:26,516 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:26,516 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:27,144 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:27,147 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:27,147 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:27,769 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:27,770 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:27,770 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:28,429 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:28,431 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:28,431 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:29,046 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:29,047 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:29,047 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:29,661 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:29,662 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:29,662 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:30,279 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:30,279 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:30,280 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:30,909 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:30,909 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:30,909 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:31,528 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:31,531 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:31,531 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:32,148 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:32,149 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:32,150 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:32,764 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:32,765 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:32,765 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:33,403 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:33,404 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:33,404 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:34,022 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:34,022 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:34,023 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:34,639 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:34,640 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:34,640 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:35,269 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:35,270 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:35,270 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:35,888 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:35,889 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:35,889 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:36,515 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:36,517 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:36,517 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:37,144 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:37,146 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:37,146 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:37,772 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:37,774 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:37,774 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:38,396 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:38,397 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:38,397 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:39,014 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:39,016 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:39,017 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:39,637 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:39,640 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:39,640 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:40,264 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:40,265 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:40,266 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:40,915 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:40,916 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:40,916 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:41,531 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:41,532 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:41,532 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:42,145 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:42,146 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:42,146 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:42,772 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:42,774 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:42,775 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:43,396 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:43,397 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:43,398 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:44,019 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:44,020 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:44,020 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:44,637 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:44,640 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:44,640 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:45,262 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:45,264 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:45,264 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:45,879 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:45,879 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:45,880 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:46,504 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:46,505 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:46,505 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:47,131 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:47,135 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:47,135 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:47,761 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:47,766 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:47,767 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:48,385 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:48,385 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:48,386 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:49,005 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:49,005 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:49,005 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:49,624 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:49,626 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:49,626 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:50,252 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:50,254 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:50,254 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:50,871 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:50,873 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:50,873 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:51,490 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:51,491 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:51,491 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:52,107 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:52,108 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:52,108 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:52,725 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:52,726 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:52,726 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:53,353 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:53,355 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:53,355 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:53,973 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:53,973 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:53,973 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:54,600 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:54,602 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:54,603 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:55,222 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:55,224 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:55,224 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:55,842 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:55,843 - trisolaris.environment.sandbox - INFO - Resource monitoring started
+2025-05-13 12:06:55,843 - trisolaris.evaluation.ethical_filter - INFO - Using cached ethical evaluation result for genome
+2025-05-13 12:06:56,466 - trisolaris.environment.sandbox - INFO - Resource monitoring stopped
+2025-05-13 12:06:56,467 - trisolaris.core.engine - INFO - Generation 0: Best fitness = -inf, Avg fitness = 0
+2025-05-13 12:06:56,738 - bluetooth_evolution_test - INFO - Generation 5: Best fitness = -inf, Avg fitness = -inf
+2025-05-13 12:06:56,739 - bluetooth_evolution_test - INFO - Evolution process complete
+2025-05-13 12:06:56,739 - bluetooth_evolution_test - INFO - Performing ethical evaluation of evolved solution
+2025-05-13 12:06:56,746 - bluetooth_evolution_test - WARNING - Ethics service is not available, using fallback mock implementation
+2025-05-13 12:06:56,751 - trisolaris.evaluation.ethics_client - INFO - Initialized ethics service client with base URL: http://localhost:8000
+2025-05-13 12:06:56,751 - trisolaris.evaluation.ethics_client - ERROR - Error in synchronous evaluate_ethics: This event loop is already running
+2025-05-13 12:06:56,751 - trisolaris.evaluation.ethics_client - WARNING - Using mock ethics evaluation implementation
+2025-05-13 12:06:56,752 - bluetooth_evolution_test - ERROR - Error during ethics evaluation: Cannot evaluate ethics due to syntax error: EOL while scanning string literal (<unknown>, line 626)
+2025-05-13 12:06:56,753 - bluetooth_evolution_test - INFO - Generating visualizations
+2025-05-13 12:06:57,509 - trisolaris.visualization - INFO - Saved evolution dashboard to test_output/evolution_metrics.png
+2025-05-13 12:06:57,509 - bluetooth_evolution_test - INFO - Visualizations saved to test_output
+2025-05-13 12:06:57,510 - bluetooth_evolution_test - INFO - Metrics saved to test_output/evolution_metrics.json
+2025-05-13 12:06:57,511 - trisolaris.environment.sandbox - INFO - Preserved sandbox environment at test_output/sandbox
