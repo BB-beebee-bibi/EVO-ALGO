@@ -234,6 +234,15 @@ class ResourceScheduler:
         return (cpu_available < self.min_cpu_available or 
                 memory_available < self.min_memory_available)
     
+    def can_proceed(self) -> bool:
+        """
+        Check if processing can proceed based on resource availability.
+        
+        Returns:
+            True if processing can proceed, False if resources are constrained
+        """
+        return not self.should_throttle()
+    
     def get_throttle_parameters(self) -> Dict[str, Any]:
         """
         Get parameters for throttling based on current resource usage.

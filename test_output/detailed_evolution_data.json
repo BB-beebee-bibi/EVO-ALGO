@@ -1,0 +1,62 @@
+[
+  {
+    "generation": 1,
+    "best_fitness": 0.594,
+    "avg_fitness": 0.574,
+    "syntax_errors": 0,
+    "syntax_error_rate": 0.0,
+    "repairs": 0,
+    "execution_time": 4.358157157897949,
+    "diversity": 0.3462823577726713,
+    "resource_usage": {
+      "avg_cpu_percent": 24.0,
+      "avg_memory_percent": 69.7,
+      "max_cpu_percent": 24.0,
+      "max_memory_percent": 69.7,
+      "min_cpu_available": 76.0,
+      "min_memory_available": 30.299999999999997,
+      "current_batch_size": 5,
+      "optimal_worker_count": 7
+    }
+  },
+  {
+    "generation": 2,
+    "best_fitness": 0.594,
+    "avg_fitness": 0.53875,
+    "syntax_errors": 0,
+    "syntax_error_rate": 0.0,
+    "repairs": 0,
+    "execution_time": 4.344802618026733,
+    "diversity": 0.3480400355155913,
+    "resource_usage": {
+      "avg_cpu_percent": 45.9,
+      "avg_memory_percent": 69.75,
+      "max_cpu_percent": 67.8,
+      "max_memory_percent": 69.8,
+      "min_cpu_available": 32.2,
+      "min_memory_available": 30.200000000000003,
+      "current_batch_size": 5,
+      "optimal_worker_count": 4
+    }
+  },
+  {
+    "generation": 3,
+    "best_fitness": 0.594,
+    "avg_fitness": 0.55365,
+    "syntax_errors": 0,
+    "syntax_error_rate": 0.0,
+    "repairs": 0,
+    "execution_time": 4.150562763214111,
+    "diversity": 0.3595860027011086,
+    "resource_usage": {
+      "avg_cpu_percent": 37.199999999999996,
+      "avg_memory_percent": 69.73333333333333,
+      "max_cpu_percent": 67.8,
+      "max_memory_percent": 69.8,
+      "min_cpu_available": 32.2,
+      "min_memory_available": 30.200000000000003,
+      "current_batch_size": 5,
+      "optimal_worker_count": 7
+    }
+  }
+]

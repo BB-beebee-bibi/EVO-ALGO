@@ -34,3 +34,77 @@ AttributeError: 'ResourceScheduler' object has no attribute 'can_proceed'
     if self.resource_monitor and not self.resource_monitor.can_proceed():
 AttributeError: 'ResourceScheduler' object has no attribute 'can_proceed'
 
+2025-05-13 16:27:59,333 - trisolaris.visualization - WARNING - Interactive visualization dependencies not found. Install plotly for interactive visualizations.
+2025-05-13 16:27:59,335 - enhanced_trisolaris_demo - INFO - Initialized Enhanced TRISOLARIS Demonstration with 20 individuals, 3 generations
+2025-05-13 16:27:59,336 - trisolaris.core.engine - ERROR - Failed to initialize sandbox: __init__() got an unexpected keyword argument 'max_cpu_percent'
+2025-05-13 16:27:59,417 - enhanced_trisolaris_demo - INFO - Initialized population with 20 individuals based on template
+2025-05-13 16:27:59,417 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 1/3
+2025-05-13 16:27:59,421 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 0/20 (0.00%)
+2025-05-13 16:28:02,528 - enhanced_trisolaris_demo - INFO - Population diversity: 0.3417
+2025-05-13 16:28:02,529 - enhanced_trisolaris_demo - ERROR - Error during demonstration: 'ResourceScheduler' object has no attribute 'can_proceed'
+2025-05-13 16:28:02,531 - enhanced_trisolaris_demo - ERROR - Traceback (most recent call last):
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo.py", line 256, in run_demonstration
+    self._evolve_one_generation(engine, generation)
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/enhanced_trisolaris_demo.py", line 332, in _evolve_one_generation
+    engine.evaluate_population()
+  File "/Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/trisolaris/core/engine.py", line 166, in evaluate_population
+    if self.resource_monitor and not self.resource_monitor.can_proceed():
+AttributeError: 'ResourceScheduler' object has no attribute 'can_proceed'
+
+2025-05-13 16:33:09,766 - trisolaris.visualization - WARNING - Interactive visualization dependencies not found. Install plotly for interactive visualizations.
+2025-05-13 16:33:09,767 - enhanced_trisolaris_demo - INFO - Initialized Enhanced TRISOLARIS Demonstration with 20 individuals, 3 generations
+2025-05-13 16:33:09,767 - trisolaris.core.engine - ERROR - Failed to initialize sandbox: __init__() got an unexpected keyword argument 'max_cpu_percent'
+2025-05-13 16:33:09,836 - enhanced_trisolaris_demo - INFO - Initialized population with 20 individuals based on template
+2025-05-13 16:33:09,836 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 1/3
+2025-05-13 16:33:09,841 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 0/20 (0.00%)
+2025-05-13 16:33:12,905 - enhanced_trisolaris_demo - INFO - Population diversity: 0.3463
+2025-05-13 16:33:12,905 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring started
+2025-05-13 16:33:12,905 - trisolaris.core.engine - INFO - Using 7 workers based on resource availability
+2025-05-13 16:33:14,034 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring stopped
+2025-05-13 16:33:14,042 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.594, Avg fitness = 0.574, Evaluation time = 1.14s
+2025-05-13 16:33:14,193 - enhanced_trisolaris_demo - INFO - Repairs in generation 1: 0
+2025-05-13 16:33:14,195 - enhanced_trisolaris_demo - INFO - Generation 1 completed in 4.36 seconds
+2025-05-13 16:33:14,195 - enhanced_trisolaris_demo - INFO - Resource usage: CPU 24.0%, Memory 69.7%
+2025-05-13 16:33:14,195 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 2/3
+2025-05-13 16:33:14,199 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 0/20 (0.00%)
+2025-05-13 16:33:17,280 - enhanced_trisolaris_demo - INFO - Population diversity: 0.3480
+2025-05-13 16:33:17,280 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring started
+2025-05-13 16:33:17,280 - trisolaris.core.engine - INFO - Using 7 workers based on resource availability
+2025-05-13 16:33:18,397 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring stopped
+2025-05-13 16:33:18,398 - trisolaris.core.engine - INFO - Generations without significant improvement: 1/5
+2025-05-13 16:33:18,398 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.594, Avg fitness = 0.53875, Evaluation time = 1.12s
+2025-05-13 16:33:18,538 - enhanced_trisolaris_demo - INFO - Repairs in generation 2: 0
+2025-05-13 16:33:18,539 - enhanced_trisolaris_demo - INFO - Generation 2 completed in 4.34 seconds
+2025-05-13 16:33:18,540 - enhanced_trisolaris_demo - INFO - Resource usage: CPU 45.9%, Memory 69.8%
+2025-05-13 16:33:18,540 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 3/3
+2025-05-13 16:33:18,544 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 0/20 (0.00%)
+2025-05-13 16:33:21,578 - enhanced_trisolaris_demo - INFO - Population diversity: 0.3596
+2025-05-13 16:33:21,579 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring started
+2025-05-13 16:33:21,579 - trisolaris.core.engine - INFO - Using 4 workers based on resource availability
+2025-05-13 16:33:22,687 - trisolaris.managers.resource_scheduler - INFO - Resource monitoring stopped
+2025-05-13 16:33:22,688 - trisolaris.core.engine - INFO - Generations without significant improvement: 2/5
+2025-05-13 16:33:22,688 - trisolaris.core.engine - INFO - Generation 0: Best fitness = 0.594, Avg fitness = 0.55365, Evaluation time = 1.11s
+2025-05-13 16:33:22,689 - enhanced_trisolaris_demo - INFO - Repairs in generation 3: 0
+2025-05-13 16:33:22,690 - enhanced_trisolaris_demo - INFO - Generation 3 completed in 4.15 seconds
+2025-05-13 16:33:22,691 - enhanced_trisolaris_demo - INFO - Resource usage: CPU 37.2%, Memory 69.7%
+2025-05-13 16:33:22,692 - enhanced_trisolaris_demo - INFO - Demonstration completed in 12.92 seconds
+2025-05-13 16:33:22,692 - enhanced_trisolaris_demo - INFO - Generating visualizations
+2025-05-13 16:33:22,859 - trisolaris.visualization - WARNING - No generation data available for dashboard
+2025-05-13 16:33:22,859 - enhanced_trisolaris_demo - INFO - Interactive dashboard created at None
+2025-05-13 16:33:22,859 - trisolaris.visualization.dashboard - WARNING - Required key 'fitness_history' not found in metrics
+2025-05-13 16:33:22,860 - trisolaris.visualization.dashboard - WARNING - Plotly not available, falling back to static visualization
+2025-05-13 16:33:22,958 - trisolaris.visualization - INFO - Saved evolution progress visualization to test_output/fitness_progression.png
+2025-05-13 16:33:22,958 - enhanced_trisolaris_demo - INFO - Fitness progression visualization saved to test_output/fitness_progression.png
+2025-05-13 16:33:22,958 - trisolaris.visualization.dashboard - WARNING - No syntax error metrics found in metrics
+2025-05-13 16:33:22,958 - enhanced_trisolaris_demo - INFO - Syntax error visualization saved to None
+2025-05-13 16:33:23,015 - trisolaris.visualization - INFO - Saved resource usage visualization to test_output/resource_usage.png
+2025-05-13 16:33:23,015 - enhanced_trisolaris_demo - INFO - Resource usage visualization saved to test_output/resource_usage.png
+2025-05-13 16:33:23,016 - enhanced_trisolaris_demo - INFO - Metrics saved to test_output/evolution_metrics.json
+2025-05-13 16:33:23,020 - enhanced_trisolaris_demo - INFO - Evolution data exported to CSV: test_output/evolution_data.csv
+2025-05-13 16:33:23,020 - enhanced_trisolaris_demo - INFO - Detailed evolution data exported to JSON: test_output/detailed_evolution_data.json
+2025-05-13 16:44:16,305 - trisolaris.visualization - WARNING - Interactive visualization dependencies not found. Install plotly for interactive visualizations.
+2025-05-13 16:44:16,306 - enhanced_trisolaris_demo - INFO - Initialized Enhanced TRISOLARIS Demonstration with 500 individuals, 5 generations
+2025-05-13 16:44:16,306 - trisolaris.core.engine - ERROR - Failed to initialize sandbox: __init__() got an unexpected keyword argument 'max_cpu_percent'
+2025-05-13 16:44:17,982 - enhanced_trisolaris_demo - INFO - Initialized population with 500 individuals based on template
+2025-05-13 16:44:17,982 - enhanced_trisolaris_demo - INFO - Enhanced Evolution - Generation 1/5
+2025-05-13 16:44:18,084 - enhanced_trisolaris_demo - INFO - Syntax errors before evolution: 0/500 (0.00%)

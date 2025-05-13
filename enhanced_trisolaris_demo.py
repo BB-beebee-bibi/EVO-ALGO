@@ -8,7 +8,12 @@ This script demonstrates the enhanced TRISOLARIS framework with all improvements
 3. Standardized parameters (unified configuration system)
 4. Enhanced visualization capabilities (interactive visualizations and dashboard)
 
-The script runs a Bluetooth scanner evolution task with reasonable parameters.
+The script runs a File Organization task evolution with large-scale parameters:
+- Population size: 500
+- Generations: 100
+- Parallel evaluation, fitness caching, resource-aware scheduling, and early stopping
+- Full metrics collection (fitness, diversity, syntax error rates)
+- Interactive HTML dashboard and data export (CSV, JSON)
 """
 
 import os
@@ -35,13 +40,16 @@ logger = logging.getLogger("enhanced_trisolaris_demo")
 from trisolaris.core.engine import EvolutionEngine
 from trisolaris.core.genome import SyntaxAwareCodeGenome
 from trisolaris.core.syntax_validator import SyntaxValidator
-from trisolaris.tasks.bluetooth_scanner import BluetoothScannerTask
+from trisolaris.tasks.file_organization import FileOrganizationTask
 from trisolaris.evaluation.fitness import FitnessEvaluator
 from trisolaris.managers.resource_scheduler import ResourceScheduler
+from trisolaris.managers.diversity import DiversityGuardian
 from trisolaris.config import (
-    BaseConfig, EvolutionConfig, SandboxConfig, ResourceLimits, 
+    BaseConfig, EvolutionConfig, SandboxConfig, ResourceLimits,
     ResourceSchedulerConfig, EthicalBoundaryConfig, TaskConfig
 )
+import pandas as pd
+import csv
 
 # Import visualization components
 try:
@@ -64,15 +72,16 @@ class EnhancedTrisolarisDemonstration:
     
     def __init__(
         self,
-        population_size: int = 20,
-        num_generations: int = 5,
+        population_size: int = 500,
+        num_generations: int = 100,
         mutation_rate: float = 0.2,
         crossover_rate: float = 0.7,
         output_dir: str = "demo_output",
         parallel_evaluation: bool = True,
         use_caching: bool = True,
         resource_aware: bool = True,
-        interactive_visualization: bool = True
+        interactive_visualization: bool = True,
+        early_stopping: bool = True
     ):
         """
         Initialize the demonstration.
@@ -97,12 +106,13 @@ class EnhancedTrisolarisDemonstration:
         self.use_caching = use_caching
         self.resource_aware = resource_aware
         self.interactive_visualization = interactive_visualization
+        self.early_stopping = early_stopping
         
         # Create output directory if it doesn't exist
         os.makedirs(self.output_dir, exist_ok=True)
         
         # Initialize components
-        self.task = BluetoothScannerTask()
+        self.task = FileOrganizationTask(test_directory="./test_files")
         
         # Create configuration
         self.config = self._create_config()
@@ -122,8 +132,14 @@ class EnhancedTrisolarisDemonstration:
             'syntax_errors_per_generation': [],
             'repairs_per_generation': [],
             'execution_time_per_generation': [],
-            'resource_usage_per_generation': []
+            'resource_usage_per_generation': [],
+            'diversity_per_generation': [],
+            'population_diversity': [],
+            'syntax_error_rates': []
         }
+        
+        # Initialize diversity tracker
+        self.diversity_tracker = DiversityGuardian()
         
         logger.info(f"Initialized Enhanced TRISOLARIS Demonstration with {population_size} individuals, {num_generations} generations")
     
@@ -137,26 +153,21 @@ class EnhancedTrisolarisDemonstration:
                 elitism_ratio=0.1,
                 parallel_evaluation=self.parallel_evaluation,
                 use_caching=self.use_caching,
-                early_stopping=True,
-                early_stopping_generations=3,
-                early_stopping_threshold=0.01,
+                early_stopping=self.early_stopping,
+                early_stopping_generations=5,
+                early_stopping_threshold=0.005,
                 resource_aware=self.resource_aware,
                 max_workers=None  # Auto-determine based on CPU count
             ),
             sandbox=SandboxConfig(
                 base_dir=str(self.output_dir / "sandbox"),
-                resource_limits=ResourceLimits(
-                    max_cpu_percent=80.0,
-                    max_memory_percent=80.0,
-                    max_execution_time=30.0,
-                    check_interval=0.5
-                ),
                 preserve_sandbox=True
             ),
             ethical_boundaries=EthicalBoundaryConfig(
                 use_post_evolution=True,
-                allowed_imports={"typing", "collections", "datetime", "math", 
-                               "random", "re", "time", "json", "sys", "os", "bluetooth"}
+                allowed_imports={"typing", "collections", "datetime", "math",
+                               "random", "re", "time", "json", "sys", "os", "hashlib",
+                               "mimetypes", "pathlib", "filecmp", "difflib", "shutil"}
             ),
             resource_scheduler=ResourceSchedulerConfig(
                 target_cpu_usage=70.0,
@@ -165,18 +176,19 @@ class EnhancedTrisolarisDemonstration:
                 min_memory_available=20.0,
                 check_interval=1.0,
                 adaptive_batch_size=True,
-                initial_batch_size=5
+                initial_batch_size=10
             ),
             task=TaskConfig(
-                name="bluetooth_scanner",
-                description="Bluetooth scanner task for demonstration",
+                name="file_organization",
+                description="File organization task for large-scale evolution test",
                 fitness_weights={
                     "functionality": 0.6,
                     "efficiency": 0.3,
                     "alignment": 0.1
                 },
-                allowed_imports=["os", "sys", "time", "random", "math", "json", 
-                               "datetime", "collections", "re", "logging", "bluetooth"],
+                allowed_imports=["os", "sys", "time", "random", "math", "json",
+                               "datetime", "collections", "re", "logging", "hashlib",
+                               "mimetypes", "pathlib", "filecmp", "difflib", "shutil"],
                 evolution_params={
                     "population_size": self.population_size,
                     "num_generations": self.num_generations,
@@ -225,7 +237,14 @@ class EnhancedTrisolarisDemonstration:
                 # Count syntax errors before evolution
                 syntax_errors = self._count_syntax_errors(engine.population)
                 self.metrics['syntax_errors_per_generation'].append(syntax_errors)
-                logger.info(f"Syntax errors before evolution: {syntax_errors}/{len(engine.population)}")
+                syntax_error_rate = syntax_errors / len(engine.population)
+                self.metrics['syntax_error_rates'].append(syntax_error_rate)
+                logger.info(f"Syntax errors before evolution: {syntax_errors}/{len(engine.population)} ({syntax_error_rate:.2%})")
+                
+                # Track diversity
+                diversity = self.diversity_tracker.measure_diversity(engine.population)
+                self.metrics['diversity_per_generation'].append(diversity)
+                logger.info(f"Population diversity: {diversity:.4f}")
                 
                 # Evolve one generation
                 self._evolve_one_generation(engine, generation)
@@ -271,6 +290,9 @@ class EnhancedTrisolarisDemonstration:
             
             # Save metrics
             self._save_metrics()
+            
+            # Export data in different formats
+            self._export_data()
             
             # Print summary
             self._print_summary(engine, best_individual, total_time)
@@ -445,10 +467,62 @@ class EnhancedTrisolarisDemonstration:
         
         logger.info(f"Metrics saved to {metrics_file}")
     
+    def _export_data(self):
+        """Export evolution data in CSV and additional JSON formats."""
+        # Create a DataFrame for easier data manipulation
+        generations = list(range(1, self.num_generations + 1))
+        
+        # Basic metrics for CSV export
+        data = {
+            'Generation': generations,
+            'Best_Fitness': self.metrics['best_fitness_per_generation'],
+            'Avg_Fitness': self.metrics['avg_fitness_per_generation'],
+            'Syntax_Errors': self.metrics['syntax_errors_per_generation'],
+            'Syntax_Error_Rate': self.metrics['syntax_error_rates'],
+            'Repairs': self.metrics['repairs_per_generation'],
+            'Execution_Time': self.metrics['execution_time_per_generation'],
+            'Diversity': self.metrics['diversity_per_generation']
+        }
+        
+        # Create DataFrame
+        df = pd.DataFrame(data)
+        
+        # Export to CSV
+        csv_path = self.output_dir / "evolution_data.csv"
+        df.to_csv(csv_path, index=False)
+        logger.info(f"Evolution data exported to CSV: {csv_path}")
+        
+        # Export detailed JSON for each generation
+        detailed_json_path = self.output_dir / "detailed_evolution_data.json"
+        detailed_data = []
+        
+        for i, gen in enumerate(generations):
+            gen_data = {
+                'generation': gen,
+                'best_fitness': self.metrics['best_fitness_per_generation'][i] if i < len(self.metrics['best_fitness_per_generation']) else None,
+                'avg_fitness': self.metrics['avg_fitness_per_generation'][i] if i < len(self.metrics['avg_fitness_per_generation']) else None,
+                'syntax_errors': self.metrics['syntax_errors_per_generation'][i] if i < len(self.metrics['syntax_errors_per_generation']) else None,
+                'syntax_error_rate': self.metrics['syntax_error_rates'][i] if i < len(self.metrics['syntax_error_rates']) else None,
+                'repairs': self.metrics['repairs_per_generation'][i] if i < len(self.metrics['repairs_per_generation']) else None,
+                'execution_time': self.metrics['execution_time_per_generation'][i] if i < len(self.metrics['execution_time_per_generation']) else None,
+                'diversity': self.metrics['diversity_per_generation'][i] if i < len(self.metrics['diversity_per_generation']) else None
+            }
+            
+            # Add resource usage if available
+            if 'resource_usage_per_generation' in self.metrics and i < len(self.metrics['resource_usage_per_generation']):
+                gen_data['resource_usage'] = self.metrics['resource_usage_per_generation'][i]
+            
+            detailed_data.append(gen_data)
+        
+        with open(detailed_json_path, 'w') as f:
+            json.dump(detailed_data, f, indent=2)
+        
+        logger.info(f"Detailed evolution data exported to JSON: {detailed_json_path}")
+    
     def _print_summary(self, engine, best_individual, total_time):
         """Print a summary of the demonstration results."""
         print("\n" + "="*80)
-        print("ENHANCED TRISOLARIS FRAMEWORK DEMONSTRATION SUMMARY")
+        print("ENHANCED TRISOLARIS FRAMEWORK LARGE-SCALE EVOLUTION TEST SUMMARY")
         print("="*80)
         
         # Print evolution parameters
@@ -464,6 +538,7 @@ class EnhancedTrisolarisDemonstration:
         print(f"  Parallel Processing: {'Enabled' if self.parallel_evaluation else 'Disabled'}")
         print(f"  Fitness Caching: {'Enabled' if self.use_caching else 'Disabled'}")
         print(f"  Resource-Aware Scheduling: {'Enabled' if self.resource_aware else 'Disabled'}")
+        print(f"  Early Stopping: {'Enabled' if self.early_stopping else 'Disabled'}")
         print(f"  Interactive Visualizations: {'Enabled' if VISUALIZATION_AVAILABLE and self.interactive_visualization else 'Disabled'}")
         
         # Print syntax error statistics
@@ -487,6 +562,13 @@ class EnhancedTrisolarisDemonstration:
         print(f"  Initial Avg Fitness: {avg_fitness[0]:.4f}")
         print(f"  Final Avg Fitness: {avg_fitness[-1]:.4f}")
         
+        # Print diversity statistics
+        diversity = self.metrics['diversity_per_generation']
+        print(f"\nDiversity Statistics:")
+        print(f"  Initial Diversity: {diversity[0]:.4f}")
+        print(f"  Final Diversity: {diversity[-1]:.4f}")
+        print(f"  Change: {(diversity[-1] - diversity[0]):.4f}")
+        
         # Print performance statistics
         exec_times = self.metrics['execution_time_per_generation']
         
@@ -505,13 +587,14 @@ class EnhancedTrisolarisDemonstration:
         print(f"\nDetailed results saved to: {self.output_dir}")
         print(f"Best solution: {self.output_dir / 'best.py'}")
         print(f"Visualizations: {self.output_dir}")
+        print(f"Data exports: {self.output_dir / 'evolution_data.csv'} and {self.output_dir / 'detailed_evolution_data.json'}")
         print("="*80 + "\n")
 
 
 def main():
     """Main function to run the demonstration."""
-    parser = argparse.ArgumentParser(description="Demonstrate the enhanced TRISOLARIS framework")
-    parser.add_argument("--population", type=int, default=20, help="Population size")
+    parser = argparse.ArgumentParser(description="Run large-scale evolution test with the enhanced TRISOLARIS framework")
+    parser.add_argument("--population", type=int, default=500, help="Population size")
     parser.add_argument("--generations", type=int, default=5, help="Number of generations")
     parser.add_argument("--mutation-rate", type=float, default=0.2, help="Mutation rate")
     parser.add_argument("--crossover-rate", type=float, default=0.7, help="Crossover rate")
@@ -520,6 +603,7 @@ def main():
     parser.add_argument("--no-caching", action="store_true", help="Disable fitness caching")
     parser.add_argument("--no-resource-aware", action="store_true", help="Disable resource-aware scheduling")
     parser.add_argument("--no-interactive", action="store_true", help="Disable interactive visualizations")
+    parser.add_argument("--no-early-stopping", action="store_true", help="Disable early stopping")
     
     args = parser.parse_args()
     
@@ -533,7 +617,8 @@ def main():
         parallel_evaluation=not args.no_parallel,
         use_caching=not args.no_caching,
         resource_aware=not args.no_resource_aware,
-        interactive_visualization=not args.no_interactive
+        interactive_visualization=not args.no_interactive,
+        early_stopping=not args.no_early_stopping
     )
     
     demo.run_demonstration()
