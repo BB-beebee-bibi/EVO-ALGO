@@ -3,12 +3,15 @@ Ethical Boundary Enforcer for the TRISOLARIS framework.
 
 This module implements strict ethical filters that enforce boundaries on what
 evolved code can do, ensuring it operates within safe and ethical constraints.
+It provides multiple layers of protection to prevent harmful code generation
+and execution, with a focus on safety, ethics, and responsible AI development.
 """
 
 import ast
 import re
 import logging
 import inspect
+import os
 from typing import List, Dict, Set, Optional, Any, Callable, Union
 
 # Configure logging
@@ -20,7 +23,8 @@ class EthicalBoundaryEnforcer:
     Enforces ethical boundaries on evolved code to ensure safety and ethical compliance.
     
     This class implements a set of filters that analyze code for potential safety
-    issues and ethical concerns before it is evaluated or executed.
+    issues and ethical concerns before it is evaluated or executed. It provides
+    multiple layers of protection through both pattern-based and AST-based analysis.
     """
     
     def __init__(self):
@@ -39,13 +43,7 @@ class EthicalBoundaryEnforcer:
             "no_imports": self._check_no_imports,
             "max_execution_time": self._check_max_execution_time,
             "max_memory_usage": self._check_max_memory_usage,
-            
-            # Gurbani-inspired ethical boundaries
-            "universal_equity": self._check_universal_equity,
-            "truthful_communication": self._check_truthful_communication,
-            "humble_code": self._check_humble_code,
-            "service_oriented": self._check_service_oriented,
-            "harmony_with_environment": self._check_harmony_with_environment
+            "sandboxed_execution": self._check_sandboxed_execution
         }
     
     def check(self, genome) -> bool:
@@ -179,12 +177,38 @@ class EthicalBoundaryEnforcer:
             r'`[^`]*`',  # Backticks for command substitution
             r'\bexec\s*\(',
             r'\bshutil\..*exec',
+            r'\bos\.spawn',
+            r'\bptyprocess\.',
+            r'\bos\.fork',
+            r'\bos\.execv',
+            r'\bos\.execl',
+            r'\bplatform\.system',
+            r'\bos\.startfile',
+            r'\bctypes\.windll',
+            r'\bwinreg\.',  # Windows registry access
+            r'\bmsvcrt\.',  # Windows-specific system access
         ]
         
         for pattern in patterns:
             if re.search(pattern, source, re.IGNORECASE):
+                logger.warning(f"System call attempt detected: {pattern}")
                 return False
         
+        # Also check for AST nodes that might indicate system calls
+        try:
+            tree = ast.parse(source)
+            for node in ast.walk(tree):
+                # Check for attribute access that might be system calls
+                if isinstance(node, ast.Attribute):
+                    attr_name = node.attr.lower()
+                    if any(dangerous in attr_name for dangerous in ['system', 'exec', 'spawn', 'popen', 'call']):
+                        logger.warning(f"Potential system call via attribute: {attr_name}")
+                        return False
+        except SyntaxError:
+            # If we can't parse the code, fail closed for safety
+            logger.warning("Syntax error while checking for system calls")
+            return False
+            
         return True
     
     def _check_no_eval_exec(self, source: str, **kwargs) -> bool:
@@ -194,12 +218,28 @@ class EthicalBoundaryEnforcer:
             r'\bexec\s*\(',
             r'\bcompile\s*\([^)]*\bexec\b',
             r'__import__\s*\(',
+            r'globals\(\)\s*\[\s*[\'"][^\'"]+[\'"]\s*\]\s*\(',  # Dynamic function calls via globals
+            r'locals\(\)\s*\[\s*[\'"][^\'"]+[\'"]\s*\]\s*\(',   # Dynamic function calls via locals
+            r'getattr\s*\([^,]+,\s*[\'"]__call__[\'"]\s*\)',    # Getting callable attributes
+            r'ast\.literal_eval\s*\(',                          # Even ast.literal_eval can be dangerous in some contexts
+            r'pickle\.loads\s*\(',                              # Pickle deserialization can execute code
+            r'marshal\.loads\s*\(',                             # Marshal deserialization can execute code
+            r'importlib\.',                                     # Dynamic imports
+            r'runpy\.',                                         # Running Python modules
+            r'code\.',                                          # Interactive interpreter
+            r'codeop\.',                                        # Code compilation
         ]
         
         for pattern in patterns:
             if re.search(pattern, source, re.IGNORECASE):
+                logger.warning(f"Code execution attempt detected: {pattern}")
                 return False
         
+        # Check for string formatting that might be used for code execution
+        if re.search(r'f[\'"].*\{.*\}.*[\'"]', source) and re.search(r'\beval\b|\bexec\b', source):
+            logger.warning("Potential code execution via f-strings detected")
+            return False
+            
         return True
     
     def _check_no_file_operations(self, source: str, allowed_dirs: List[str] = None, **kwargs) -> bool:
@@ -224,18 +264,76 @@ class EthicalBoundaryEnforcer:
                 r'\bos\.makedirs\s*\(',
                 r'\bshutil\.copy',
                 r'\bshutil\.move',
-                r'\bpathlib\.Path'
+                r'\bpathlib\.Path',
+                r'\bos\.path\.exists',
+                r'\bos\.access',
+                r'\bos\.chmod',
+                r'\bos\.chown',
+                r'\bos\.link',
+                r'\bos\.symlink',
+                r'\bos\.truncate',
+                r'\bos\.utime',
+                r'\bos\.mkdir',
+                r'\bos\.rmdir',
+                r'\bos\.scandir',
+                r'\bos\.walk',
+                r'\bglob\.',
+                r'\bfileinput\.',
+                r'\bfilecmp\.',
+                r'\bstat\.',
+                r'\bfcntl\.',
+                r'\bmmap\.',
+                r'\bio\.',
+                r'\btempfile\.',
+                r'\bcodecs\.open',
             ]
             
             for pattern in patterns:
                 if re.search(pattern, source, re.IGNORECASE):
+                    logger.warning(f"File operation detected: {pattern}")
                     return False
             
             return True
         else:
-            # TODO: Implement more sophisticated check for allowed directories
-            # This would require parsing the AST to extract file paths and check them
-            return True
+            # Implement more sophisticated check for allowed directories
+            # Parse the AST to extract file paths and check them
+            try:
+                tree = ast.parse(source)
+                
+                # Track potential file paths in string literals
+                file_paths = []
+                
+                for node in ast.walk(tree):
+                    # Check for string literals that might be file paths
+                    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                        potential_path = node.value
+                        # Simple heuristic: strings that look like file paths
+                        if ('/' in potential_path or '\\' in potential_path) and '.' in potential_path:
+                            file_paths.append(potential_path)
+                    
+                    # Check for open() calls
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'open':
+                        if node.args:
+                            # The first argument to open() is the file path
+                            arg = node.args[0]
+                            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                                file_path = arg.value
+                                # Check if this path is within allowed directories
+                                if not any(file_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
+                                    logger.warning(f"File operation outside allowed directories: {file_path}")
+                                    return False
+                
+                # Check all potential file paths
+                for file_path in file_paths:
+                    if os.path.isabs(file_path) and not any(file_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
+                        logger.warning(f"Potential file operation outside allowed directories: {file_path}")
+                        return False
+                
+                return True
+            except SyntaxError:
+                # If we can't parse the code, fail closed for safety
+                logger.warning("Syntax error while checking file operations")
+                return False
     
     def _check_no_network_access(self, source: str, **kwargs) -> bool:
         """Check that the code doesn't attempt network access."""
@@ -247,11 +345,58 @@ class EthicalBoundaryEnforcer:
             r'\burllib2\.',
             r'\bftplib\.',
             r'\.connect\s*\(',
+            r'\bsmtplib\.',
+            r'\bpoplib\.',
+            r'\bimaplib\.',
+            r'\btelnetlib\.',
+            r'\bnntplib\.',
+            r'\bsmtpd\.',
+            r'\baiohttp\.',
+            r'\basyncio\.open_connection',
+            r'\bselectors\.',
+            r'\bselect\.',
+            r'\bpycurl\.',
+            r'\bparamiko\.',
+            r'\btwisted\.',
+            r'\btornado\.',
+            r'\bwebsockets\.',
+            r'\bgrpc\.',
+            r'\bpika\.',
+            r'\bzmq\.',
+            r'\bpyzmq\.',
+            r'\bsocketserver\.',
+            r'\bsocketio\.',
+            r'\bssl\.',
+            r'\bopenssl\.',
+            r'\bcryptography\.hazmat\.primitives\.asymmetric',
+            r'\bpyopenssl\.',
+            r'\bssh\.',
+            r'\bdns\.',
+            r'\bdnspython\.',
+            r'\bipaddress\.',
+            r'\bnetifaces\.',
         ]
         
         for pattern in patterns:
             if re.search(pattern, source, re.IGNORECASE):
+                logger.warning(f"Network access attempt detected: {pattern}")
                 return False
+        
+        # Check for common network port numbers in the code
+        port_pattern = r'(?:^|[^0-9])(?:80|443|21|22|23|25|110|143|3306|5432|27017|6379|9200|9300)(?:[^0-9]|$)'
+        if re.search(port_pattern, source):
+            # If there are port numbers, check if they're in a comment
+            for match in re.finditer(port_pattern, source):
+                line_start = source.rfind('\n', 0, match.start()) + 1
+                line_end = source.find('\n', match.end())
+                if line_end == -1:
+                    line_end = len(source)
+                line = source[line_start:line_end]
+                
+                # If the port is not in a comment, flag it
+                if not re.match(r'^\s*#', line) and not '//' in line[:match.start() - line_start]:
+                    logger.warning(f"Potential network port usage detected: {match.group(0)}")
+                    return False
         
         return True
     
@@ -265,7 +410,7 @@ class EthicalBoundaryEnforcer:
         """
         if allowed_imports is None:
             # Default allowed imports from standard library
-            allowed_imports = {'typing', 'collections', 'datetime', 'math', 'random', 're', 'time', 'socket', 'json', 'sys', 'os'}
+            allowed_imports = {'typing', 'collections', 'datetime', 'math', 'random', 're', 'time', 'json', 'sys', 'os'}
         
         try:
             tree = ast.parse(source)
@@ -288,6 +433,11 @@ class EthicalBoundaryEnforcer:
                             logger.warning(f"Disallowed import from: {root_module}")
                             return False
             
+            # Also check for dynamic imports via __import__ or importlib
+            if re.search(r'__import__\s*\(|importlib\.|__import', source, re.IGNORECASE):
+                logger.warning("Potential dynamic import detected")
+                return False
+                
             return True
         except SyntaxError:
             # If we can't parse the code, fail closed for safety
@@ -309,6 +459,8 @@ class EthicalBoundaryEnforcer:
         patterns = [
             r'while\s+True\s*:',
             r'for\s+[^:]+\s+in\s+range\s*\(\s*[0-9]{7,}\s*\)',  # Very large ranges
+            r'while\s+[^:]+\s*:(?!.*(?:break|return|exit|quit))',  # While loops without break conditions
+            r'def\s+[^(]+\([^)]*\):[^#]*\1\s*\(',  # Recursive function calls without base case
         ]
         
         for pattern in patterns:
@@ -318,6 +470,43 @@ class EthicalBoundaryEnforcer:
                     logger.warning(f"Potential infinite loop without timeout")
                     return False
         
+        # Check for nested loops which might indicate O(n²) or worse complexity
+        try:
+            tree = ast.parse(source)
+            
+            class LoopNestingVisitor(ast.NodeVisitor):
+                def __init__(self):
+                    self.max_loop_nesting = 0
+                    self.current_loop_nesting = 0
+                
+                def visit_For(self, node):
+                    self.current_loop_nesting += 1
+                    if self.current_loop_nesting > self.max_loop_nesting:
+                        self.max_loop_nesting = self.current_loop_nesting
+                    self.generic_visit(node)
+                    self.current_loop_nesting -= 1
+                
+                def visit_While(self, node):
+                    self.current_loop_nesting += 1
+                    if self.current_loop_nesting > self.max_loop_nesting:
+                        self.max_loop_nesting = self.current_loop_nesting
+                    self.generic_visit(node)
+                    self.current_loop_nesting -= 1
+            
+            visitor = LoopNestingVisitor()
+            visitor.visit(tree)
+            
+            # Flag code with deeply nested loops (potential performance issue)
+            if visitor.max_loop_nesting > 3:
+                # Check if there's a timeout mechanism for deeply nested loops
+                if not re.search(r'time\.(sleep|time)\s*\(', source, re.IGNORECASE):
+                    logger.warning(f"Deeply nested loops ({visitor.max_loop_nesting} levels) without timeout")
+                    return False
+        except SyntaxError:
+            # If we can't parse the code, fail closed for safety
+            logger.warning("Syntax error while checking execution time")
+            return False
+            
         return True
     
     def _check_max_memory_usage(self, source: str, max_memory_usage: int = 100, **kwargs) -> bool:
@@ -336,227 +525,136 @@ class EthicalBoundaryEnforcer:
             r'range\s*\(\s*[0-9]{7,}\s*\)',  # Very large ranges
             r'\[\s*[0-9]+\s*\*\s*[0-9]{6,}\s*\]',  # Large list comprehensions
             r'\{\s*[0-9]+\s*\:\s*[0-9]+\s*for\s+[^}]+\s+in\s+range\s*\(\s*[0-9]{6,}\s*\)\s*\}',  # Large dict comprehensions
+            r'\[\s*[^\]]+\s+for\s+[^\]]+\s+in\s+range\s*\(\s*[0-9]{6,}\s*\)\s*\]',  # Large list comprehensions with range
+            r'\{\s*[^}]+\s+for\s+[^}]+\s+in\s+range\s*\(\s*[0-9]{6,}\s*\)\s*\}',  # Large set/dict comprehensions with range
+            r'np\.zeros\s*\(\s*\(\s*[0-9]{4,}\s*,\s*[0-9]{4,}\s*\)\s*\)',  # Large numpy arrays
+            r'np\.ones\s*\(\s*\(\s*[0-9]{4,}\s*,\s*[0-9]{4,}\s*\)\s*\)',  # Large numpy arrays
+            r'np\.empty\s*\(\s*\(\s*[0-9]{4,}\s*,\s*[0-9]{4,}\s*\)\s*\)',  # Large numpy arrays
+            r'np\.array\s*\(\s*\[\s*[0-9]{4,}\s*\*\s*\[',  # Large numpy arrays
+            r'torch\.zeros\s*\(\s*[0-9]{4,}\s*,\s*[0-9]{4,}\s*\)',  # Large torch tensors
+            r'torch\.ones\s*\(\s*[0-9]{4,}\s*,\s*[0-9]{4,}\s*\)',  # Large torch tensors
+            r'torch\.empty\s*\(\s*[0-9]{4,}\s*,\s*[0-9]{4,}\s*\)',  # Large torch tensors
+            r'pd\.DataFrame\s*\(\s*np\.random\.rand\s*\(\s*[0-9]{4,}\s*,\s*[0-9]{4,}\s*\)\s*\)',  # Large pandas DataFrames
         ]
         
         for pattern in patterns:
             if re.search(pattern, source, re.IGNORECASE):
-                logger.warning(f"Potential excessive memory usage")
+                logger.warning(f"Potential excessive memory usage: {pattern}")
                 return False
         
-        return True
-    
-    # === Gurbani-Inspired Ethical Boundaries ===
-    
-    def _check_universal_equity(self, source: str, **kwargs) -> bool:
-        """
-        Check for code patterns that might treat different inputs inequitably.
-        
-        Inspired by the Gurbani principle of treating all equally.
-        """
-        # Look for hardcoded biases, special cases for specific groups, etc.
-        patterns = [
-            r'\bif\s+.*\b(gender|race|ethnicity|nationality|religion)\b.*:',  # Simplistic check for demographic-based branching
-            r'bias',
-            r'blacklist',
-            r'whitelist',
-        ]
-        
-        # This is a simplified check - a real implementation would need more sophisticated analysis
-        for pattern in patterns:
-            if re.search(pattern, source, re.IGNORECASE):
-                # Look for comments indicating ethical considerations
-                context = 10  # Lines of context to check
-                matches = re.finditer(pattern, source, re.IGNORECASE)
-                for match in matches:
-                    start_pos = match.start()
-                    # Find the start of the line containing this match
-                    line_start = source.rfind('\n', 0, start_pos) + 1
-                    # Find several lines before
-                    previous_lines = source[max(0, source.rfind('\n', 0, line_start - context)):line_start]
-                    
-                    # If there's a comment indicating ethical consideration, allow it
-                    if re.search(r'#.*\b(ethical|fairness|equity|equality)\b', previous_lines, re.IGNORECASE):
-                        continue
-                        
-                    logger.warning(f"Potential equity issue found: {match.group(0)}")
-                    return False
-        
-        return True
-    
-    def _check_truthful_communication(self, source: str, **kwargs) -> bool:
-        """
-        Check for code patterns that might lead to misleading outputs.
-        
-        Inspired by the Gurbani principle of truthfulness (Sat Nam).
-        """
-        # Look for deceptive patterns, misleading variable names, etc.
-        patterns = [
-            r'fake',
-            r'deceive',
-            r'trick',
-            r'mislead',
-            r'false.*report',
-        ]
-        
-        for pattern in patterns:
-            if re.search(pattern, source, re.IGNORECASE):
-                logger.warning(f"Potential truthfulness issue found: {pattern}")
-                return False
-        
-        # Check for error handling - code should handle and report errors truthfully
+        # Check for memory leaks in loops
         try:
             tree = ast.parse(source)
-            has_try = False
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Try):
-                    has_try = True
-                    break
             
-            # If code has function definitions but no error handling, flag it
-            # This is a simplified heuristic
-            has_funcs = any(isinstance(node, ast.FunctionDef) for node in ast.walk(tree))
-            if has_funcs and not has_try and len(source.splitlines()) > 30:
-                logger.warning("Code lacks error handling for truthful communication")
-                return False
-                
-        except SyntaxError:
-            # If we can't parse the code, pass this check but log a warning
-            logger.warning("Syntax error while checking for truthful communication")
-        
-        return True
-    
-    def _check_humble_code(self, source: str, **kwargs) -> bool:
-        """
-        Check for code patterns that might indicate unnecessary complexity or "showing off."
-        
-        Inspired by the Gurbani principle of humility (Nimrata).
-        """
-        # Look for unnecessarily complex code, "clever tricks," etc.
-        # Calculate code complexity metrics
-        
-        # Check line length - consistently very long lines might indicate lack of readability
-        lines = source.splitlines()
-        very_long_lines = sum(1 for line in lines if len(line.strip()) > 100)
-        if lines and very_long_lines / len(lines) > 0.3:  # More than 30% are very long
-            logger.warning("Code has many excessively long lines, reducing readability")
+            # Look for large container creation inside loops
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.For, ast.While)):
+                    # Check if there are large container creations inside the loop
+                    for child in ast.walk(node):
+                        if isinstance(child, (ast.ListComp, ast.DictComp, ast.SetComp)):
+                            # If there's a large comprehension inside a loop, flag it
+                            try:
+                                if re.search(r'range\s*\(\s*[0-9]{4,}\s*\)', ast.unparse(child), re.IGNORECASE):
+                                    logger.warning("Large container creation inside loop")
+                                    return False
+                            except AttributeError:
+                                # ast.unparse might not be available in older Python versions
+                                pass
+                        
+                        # Check for large list/dict/set creation
+                        if isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
+                            if child.func.id in ['list', 'dict', 'set'] and child.args:
+                                try:
+                                    # If there's a large container creation inside a loop, flag it
+                                    if re.search(r'range\s*\(\s*[0-9]{4,}\s*\)', ast.unparse(child), re.IGNORECASE):
+                                        logger.warning("Large container creation inside loop")
+                                        return False
+                                except AttributeError:
+                                    # ast.unparse might not be available in older Python versions
+                                    pass
+        except (SyntaxError, AttributeError):
+            # If we can't parse the code or ast.unparse is not available, fail closed for safety
+            logger.warning("Error while checking memory usage")
             return False
         
-        # Check for nested list/dict/set comprehensions (often less readable)
-        if re.search(r'\[.*\bfor\b.*\bfor\b.*\]', source) or re.search(r'\{.*\bfor\b.*\bfor\b.*\}', source):
-            # Check if there are comments explaining the complex comprehensions
-            if not re.search(r'#.*comprehension', source, re.IGNORECASE):
-                logger.warning("Complex comprehensions without explanatory comments")
-                return False
-        
-        # Check for deep nesting of control structures
-        try:
-            tree = ast.parse(source)
-            
-            class NestingVisitor(ast.NodeVisitor):
-                def __init__(self):
-                    self.max_nesting = 0
-                    self.current_nesting = 0
-                
-                def generic_visit(self, node):
-                    if isinstance(node, (ast.For, ast.While, ast.If, ast.With, ast.Try)):
-                        self.current_nesting += 1
-                        if self.current_nesting > self.max_nesting:
-                            self.max_nesting = self.current_nesting
-                        super().generic_visit(node)
-                        self.current_nesting -= 1
-                    else:
-                        super().generic_visit(node)
-            
-            visitor = NestingVisitor()
-            visitor.visit(tree)
-            
-            if visitor.max_nesting > 5:  # Arbitrary threshold
-                logger.warning(f"Code has deep nesting level: {visitor.max_nesting}")
-                return False
-                
-        except SyntaxError:
-            # If we can't parse the code, pass this check but log a warning
-            logger.warning("Syntax error while checking for humble code")
-        
         return True
     
-    def _check_service_oriented(self, source: str, **kwargs) -> bool:
+    def _check_sandboxed_execution(self, source: str, **kwargs) -> bool:
         """
-        Check if code appears to be service-oriented rather than self-serving.
+        Check if code attempts to break out of sandboxed execution environment.
         
-        Inspired by the Gurbani principle of selfless service (Seva).
+        This check looks for patterns that might indicate attempts to escape
+        the sandbox or access restricted resources.
         """
-        # Look for proper documentation, user-focused error messages, etc.
-        
-        # Check for docstrings
-        try:
-            tree = ast.parse(source)
+        # Check for attempts to access system information or environment
+        restricted_patterns = [
+            # System information and environment
+            r'\bos\.environ\b', r'\bplatform\.uname\b', r'\bsys\.platform\b',
+            r'\bsys\.version\b', r'\bsys\.path\b', r'\bsys\.modules\b',
             
-            # Check top-level module docstring
-            has_module_docstring = False
-            if tree.body and isinstance(tree.body[0], ast.Expr):
-                # Use modern ast.Constant for docstring detection
-                if isinstance(tree.body[0].value, ast.Constant) and isinstance(tree.body[0].value.value, str):
-                    has_module_docstring = True
+            # Reflection and introspection
+            r'\bsys\._getframe\b', r'\btraceback\.', r'\binspect\.',
+            r'\bgc\.', r'\bctypes\.',
             
-            # Check function docstrings
-            functions = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-            functions_with_docstrings = 0
-            for func in functions:
-                if func.body and isinstance(func.body[0], ast.Expr):
-                    # Use modern ast.Constant for docstring detection
-                    if isinstance(func.body[0].value, ast.Constant) and isinstance(func.body[0].value.value, str):
-                        functions_with_docstrings += 1
+            # System configuration
+            r'\bsys\.settrace\b', r'\bsys\.setprofile\b', r'\bsys\.setrecursionlimit\b',
             
-            # If there are functions but less than half have docstrings, flag it
-            if functions and functions_with_docstrings / len(functions) < 0.5:
-                logger.warning("Less than half of functions have docstrings")
-                return False
+            # Threading and multiprocessing
+            r'\bthread\.', r'\bthreading\.', r'\bmultiprocessing\.',
+            r'\bconcurrent\.', r'\bsignal\.',
             
-            # If it's a significant module with no module docstring, flag it
-            if len(tree.body) > 5 and not has_module_docstring:
-                logger.warning("Significant module with no top-level docstring")
-                return False
-                
-        except SyntaxError:
-            # If we can't parse the code, pass this check but log a warning
-            logger.warning("Syntax error while checking for service orientation")
-        
-        return True
-    
-    def _check_harmony_with_environment(self, source: str, **kwargs) -> bool:
-        """
-        Check if code is resource-efficient and environmentally conscious.
-        
-        Inspired by the Gurbani principle of harmony with nature.
-        """
-        # Look for resource-inefficient patterns, lack of cleanup, etc.
-        
-        # Check for resource cleanup in file operations, etc.
-        patterns = [
-            # File operations without context managers
-            r'open\([^)]*\)[^:]*[^\n]*((?!with|close).)*$',
+            # System resources
+            r'\bresource\.', r'\brlimit\.',
+            
+            # Security-sensitive modules
+            r'\bpwd\.', r'\bgrp\.', r'\bcrypt\.',
+            r'\bshadow\.', r'\bspwd\.',
+            
+            # Terminal access
+            r'\btermios\.', r'\btty\.', r'\bpty\.',
+            r'\bcurses\.',
+            
+            # Low-level file operations
+            r'\bfcntl\.', r'\bmmap\.',
+            
+            # Network-related
+            r'\bselect\.', r'\bpoll\.', r'\bepoll\.',
+            r'\bkqueue\.', r'\bdevpoll\.',
+            
+            # Cryptography
+            r'\bcrypto\.', r'\bopenssl\.', r'\bpycrypto\.',
+            r'\bcryptography\.', r'\bhashlib\.', r'\bhmac\.',
+            
+            # Random number generation (potential for manipulation)
+            r'\bsecrets\.',
+            
+            # Testing frameworks (potential for code execution)
+            r'\bpytest\.', r'\bunittest\.', r'\bdoctest\.',
+            
+            # Profiling and debugging
+            r'\bprofile\.', r'\bcProfile\.', r'\bpstats\.',
+            r'\btimeit\.', r'\btrace\.'
         ]
         
-        for pattern in patterns:
-            if re.search(pattern, source, re.MULTILINE | re.DOTALL):
-                logger.warning("Resource usage without proper cleanup detected")
+        for pattern in restricted_patterns:
+            if re.search(pattern, source, re.IGNORECASE):
+                logger.warning(f"Sandbox escape attempt detected: {pattern}")
                 return False
         
-        # Check for efficient code patterns vs. inefficient ones
-        inefficient_patterns = [
-            r'\.append\s*\([^)]*\)\s*in\s+range',  # Building lists with append in loops
-            r'\+\=\s*"[^"]*"\s*in\s+range',  # String concatenation in loops
-        ]
-        
-        for pattern in inefficient_patterns:
-            if re.search(pattern, source):
-                logger.warning(f"Inefficient code pattern detected: {pattern}")
-                return False
+        # Check for attempts to modify Python's internal state
+        try:
+            tree = ast.parse(source)
+            for node in ast.walk(tree):
+                # Check for attribute assignments that might modify Python's state
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Attribute):
+                            if isinstance(target.value, ast.Name) and target.value.id in ['sys', 'os', 'builtins']:
+                                logger.warning(f"Attempt to modify Python internal state: {target.value.id}.{target.attr}")
+                                return False
+        except SyntaxError:
+            # If we can't parse the code, fail closed for safety
+            logger.warning("Syntax error while checking for sandbox escape")
+            return False
         
         return True
-    
-    def __str__(self) -> str:
-        """Return a string representation of the enforcer."""
-        active = self.get_active_boundaries()
-        return f"EthicalBoundaryEnforcer({len(active)} active boundaries: {', '.join(active)})"

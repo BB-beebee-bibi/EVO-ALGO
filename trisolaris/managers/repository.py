@@ -14,6 +14,8 @@ import subprocess
 from typing import List, Dict, Optional, Any, Tuple, Set
 from datetime import datetime
 
+from trisolaris.utils.paths import create_generation_dir
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -66,9 +68,6 @@ class GenomeRepository:
         # Create the main run directory
         os.makedirs(self.run_dir, exist_ok=True)
         
-        # Create subdirectories
-        self._create_subdirs()
-        
         # Initialize Git repository if enabled
         if self.use_git:
             self._init_git()
@@ -77,20 +76,6 @@ class GenomeRepository:
         self._save_metadata()
         
         logger.info(f"Initialized genome repository in {self.run_dir}")
-    
-    def _create_subdirs(self):
-        """Create standard subdirectories for the repository."""
-        # Directory for each generation
-        os.makedirs(os.path.join(self.run_dir, "generations"), exist_ok=True)
-        
-        # Directory for lineage tracking
-        os.makedirs(os.path.join(self.run_dir, "lineages"), exist_ok=True)
-        
-        # Directory for the best solutions
-        os.makedirs(os.path.join(self.run_dir, "best"), exist_ok=True)
-        
-        # Directory for metrics and visualizations
-        os.makedirs(os.path.join(self.run_dir, "metrics"), exist_ok=True)
     
     def _init_git(self):
         """Initialize Git repository for version control."""
@@ -181,9 +166,8 @@ class GenomeRepository:
         Returns:
             ID of the stored genome
         """
-        # Ensure the generation directory exists
-        gen_dir = os.path.join(self.run_dir, "generations", f"generation_{generation}")
-        os.makedirs(gen_dir, exist_ok=True)
+        # Ensure the generation directory exists using the standard function
+        gen_dir = create_generation_dir(self.run_dir, generation)
         
         # Generate a unique ID for this genome
         genome_id = f"genome_{generation}_{int(time.time() * 1000)}"
@@ -237,9 +221,8 @@ class GenomeRepository:
         # Update repository metadata file
         self._save_metadata()
         
-        # If this is a "best" solution for this generation, copy to best directory
-        best_dir = os.path.join(self.run_dir, "best")
-        best_path = os.path.join(best_dir, f"best_gen_{generation}.py")
+        # If this is a "best" solution for this generation, copy to run directory
+        best_path = os.path.join(self.run_dir, f"best_gen_{generation}.py")
         
         # Check if this is the first solution for this generation, or if it's better than previous best
         is_best = False
@@ -254,7 +237,7 @@ class GenomeRepository:
             is_best = True
         
         if is_best:
-            # Copy the file to best directory
+            # Copy the file to run directory
             shutil.copy(genome_path, best_path)
             
             # Update metadata
@@ -308,9 +291,8 @@ class GenomeRepository:
             metadata=metadata
         )
         
-        # Also store in best directory
-        best_dir = os.path.join(self.run_dir, "best")
-        best_path = os.path.join(best_dir, "best.py")
+        # Also store in run directory as best.py
+        best_path = os.path.join(self.run_dir, "best.py")
         
         # Get the source code
         source_code = genome.to_source()
@@ -349,17 +331,19 @@ class GenomeRepository:
         Returns:
             The loaded genome
         """
-        # First, find the genome file
-        for gen_dir in os.listdir(os.path.join(self.run_dir, "generations")):
-            dir_path = os.path.join(self.run_dir, "generations", gen_dir)
-            if os.path.isdir(dir_path):
-                genome_path = os.path.join(dir_path, f"{genome_id}.py")
-                if os.path.exists(genome_path):
-                    # Found it, load the genome
-                    from trisolaris.core.genome import CodeGenome
-                    with open(genome_path, "r") as f:
-                        source = f.read()
-                    return CodeGenome.from_source(source, genome_id=genome_id)
+        # First, find the genome file by checking all generation directories
+        for gen_num in range(1000):  # Reasonable upper limit
+            gen_dir = os.path.join(self.run_dir, f"generation_{gen_num}")
+            if not os.path.exists(gen_dir):
+                continue
+                
+            genome_path = os.path.join(gen_dir, f"{genome_id}.py")
+            if os.path.exists(genome_path):
+                # Found it, load the genome
+                from trisolaris.core.genome import CodeGenome
+                with open(genome_path, "r") as f:
+                    source = f.read()
+                return CodeGenome.from_source(source, genome_id=genome_id)
         
         logger.error(f"Genome not found: {genome_id}")
         return None
@@ -378,7 +362,7 @@ class GenomeRepository:
         
         if generation is not None:
             # Load best from specific generation
-            best_path = os.path.join(self.run_dir, "best", f"best_gen_{generation}.py")
+            best_path = os.path.join(self.run_dir, f"best_gen_{generation}.py")
             if os.path.exists(best_path):
                 with open(best_path, "r") as f:
                     source = f.read()
@@ -388,7 +372,7 @@ class GenomeRepository:
                 return None
         else:
             # Load overall best
-            best_path = os.path.join(self.run_dir, "best", "best.py")
+            best_path = os.path.join(self.run_dir, "best.py")
             if os.path.exists(best_path):
                 with open(best_path, "r") as f:
                     source = f.read()
