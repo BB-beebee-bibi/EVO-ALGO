@@ -74,7 +74,7 @@ class EthicalBoundaryEnforcer:
             "sandboxed_execution": self._check_sandboxed_execution
         }
         
-        logger.info(f"Initialized EthicalBoundaryEnforcer with post-evolution mode: {use_post_evolution}")
+        logger.info(f"Initialized EthicalBoundaryEnforcer with post-evolution mode: {self.use_post_evolution}")
     
     def check(self, genome) -> bool:
         """

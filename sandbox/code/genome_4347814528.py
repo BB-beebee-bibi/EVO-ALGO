@@ -1,0 +1,2 @@
+def apwys(jkv, xwc, wsb):
+    return 42

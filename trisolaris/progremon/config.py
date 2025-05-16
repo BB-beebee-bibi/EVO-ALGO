@@ -17,10 +17,17 @@ class ProgrémonConfig:
     show_evolution_progress: bool = True
     
     # Evolution settings
-    initial_population_size: int = 10
+    initial_population_size: int = 50
     max_generations: int = 100
     mutation_rate: float = 0.1
     crossover_rate: float = 0.8
+    selection_pressure: float = 0.7
+    elitism_ratio: float = 0.1
+    
+    # Resource settings
+    max_cpu_percent: float = 80.0
+    max_memory_percent: float = 80.0
+    max_execution_time: float = 30.0
     
     # Session settings
     save_session_history: bool = True
@@ -47,6 +54,11 @@ class ProgrémonConfig:
             'max_generations': self.max_generations,
             'mutation_rate': self.mutation_rate,
             'crossover_rate': self.crossover_rate,
+            'selection_pressure': self.selection_pressure,
+            'elitism_ratio': self.elitism_ratio,
+            'max_cpu_percent': self.max_cpu_percent,
+            'max_memory_percent': self.max_memory_percent,
+            'max_execution_time': self.max_execution_time,
             'save_session_history': self.save_session_history,
             'session_history_path': self.session_history_path,
             'evolution_engine': self.evolution_engine,

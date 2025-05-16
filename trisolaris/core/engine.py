@@ -141,12 +141,16 @@ class EvolutionEngine:
     def _initialize_sandbox(self):
         """Initialize the sandbox environment."""
         try:
+            # The SandboxedEnvironment constructor already pulls resource limits
+            # from the provided `BaseConfig`; passing individual limit parameters
+            # would raise a `TypeError`. Therefore, we only forward the `base_dir`
+            # (allowing the sandbox path to be overridden) together with the active
+            # configuration object.
             self.sandbox = SandboxedEnvironment(
                 base_dir=self.sandbox_dir,
-                max_cpu_percent=self.max_cpu_percent,
-                max_memory_percent=self.max_memory_percent,
-                max_execution_time=self.max_execution_time,
-                preserve_sandbox=True  # Keep sandbox for debugging
+                config=self.config,
+                component_name="sandbox",
+                run_id=self.run_id
             )
             
             # Initialize resource simulator
