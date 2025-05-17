@@ -103,4 +103,20 @@ class AdaptiveParameterTuner:
         self.current_params = EvolutionParameters(**state['parameters'])
         self.history = state['history']
         self.target_diversity = state['target_diversity']
-        self.learning_rate = state['learning_rate'] 
+        self.learning_rate = state['learning_rate']
+
+    def get_mutation_rate(self) -> float:
+        """Get the current mutation rate."""
+        return self.current_params.mutation_rate
+
+    def get_selection_pressure(self) -> float:
+        """Get the current selection pressure."""
+        return self.current_params.selection_pressure
+
+    def get_validation_threshold(self) -> float:
+        """Get the current validation threshold."""
+        return self.current_params.validation_threshold
+
+    def get_crossover_rate(self) -> float:
+        """Get the current crossover rate."""
+        return self.current_params.crossover_rate 
