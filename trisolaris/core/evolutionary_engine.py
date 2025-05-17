@@ -3,6 +3,7 @@ import numpy as np
 from ..core.meta_control.adaptive_parameters import AdaptiveParameterTuner, EvolutionParameters
 from ..core.population.dual_population import DualPopulationManager
 from ..tasks.text_file_sorting import TextFileSortingTask
+import ast
 
 class EvolutionaryEngine:
     """
@@ -53,6 +54,14 @@ class EvolutionaryEngine:
             'best_fitness': [],
             'avg_fitness': [],
             'diversity': []
+        }
+        
+        # Telemetry statistics
+        self.stats = {
+            'crossover_attempts': 0,
+            'crossover_success': 0,
+            'mutation_attempts': 0,
+            'mutation_success': 0
         }
 
     def setup_operators(self):
@@ -109,14 +118,34 @@ class EvolutionaryEngine:
         self.population_manager.program_population = next_gen
 
     def crossover(self, parent1: Any, parent2: Any) -> Any:
-        """Perform crossover between two parents (stub)."""
-        # TODO: Implement AST-based crossover
-        return parent1
+        """Perform crossover between two parents."""
+        self.stats['crossover_attempts'] += 1
+        try:
+            child1, child2 = ProgramAST.crossover(parent1, parent2)
+            # Validate the children
+            if (validate_ast(child1.ast_tree)[0] and 
+                validate_ast(child2.ast_tree)[0] and
+                ast.dump(child1.ast_tree) != ast.dump(parent1.ast_tree) and
+                ast.dump(child1.ast_tree) != ast.dump(parent2.ast_tree) and
+                ast.dump(child2.ast_tree) != ast.dump(parent1.ast_tree) and
+                ast.dump(child2.ast_tree) != ast.dump(parent2.ast_tree)):
+                self.stats['crossover_success'] += 1
+                return child1  # Return first child for now
+            return parent1  # Fallback to parent if validation fails
+        except Exception:
+            return parent1  # Fallback to parent if crossover fails
 
     def mutate(self, individual: Any) -> Any:
-        """Apply mutation to an individual (stub)."""
-        # TODO: Implement AST-based mutation
-        return individual
+        """Apply mutation to an individual."""
+        self.stats['mutation_attempts'] += 1
+        try:
+            mutated = individual.mutate(self.parameter_tuner.get_mutation_rate())
+            if validate_ast(mutated.ast_tree)[0]:
+                self.stats['mutation_success'] += 1
+                return mutated
+            return individual  # Fallback to original if validation fails
+        except Exception:
+            return individual  # Fallback to original if mutation fails
 
     def update_meta_parameters(self, fitness_scores: List[float]):
         """Update meta-control parameters based on population statistics."""
@@ -158,6 +187,12 @@ class EvolutionaryEngine:
             
             # Update meta-control parameters
             self.update_meta_parameters(fitness_scores)
+            
+            # Print telemetry stats every 5 generations
+            if self.current_generation % 5 == 0:
+                print(f"\nGeneration {self.current_generation} Telemetry:")
+                print(f"Crossover success rate: {self.stats['crossover_success']/self.stats['crossover_attempts']:.2%}")
+                print(f"Mutation success rate: {self.stats['mutation_success']/self.stats['mutation_attempts']:.2%}")
             
             self.current_generation += 1
         

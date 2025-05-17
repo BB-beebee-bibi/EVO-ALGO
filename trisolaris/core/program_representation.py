@@ -7,6 +7,9 @@ from .ast_helpers import (
     get_all_nodes, get_leaf_nodes, get_subtrees,
     validate_ast, replace_subtree, clone_ast
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ProgramAST:
     """
@@ -14,6 +17,17 @@ class ProgramAST:
     """
     def __init__(self, ast_tree: Optional[ast.AST] = None):
         self.ast_tree = ast_tree or self._generate_random_program()
+        # Initialize telemetry
+        self.stats = {
+            'mutation_attempts': 0,
+            'mutation_effective': 0,
+            'mutation_noop': 0,
+            'crossover_attempts': 0,
+            'crossover_novel': 0,
+            'crossover_parent1': 0,
+            'crossover_parent2': 0,
+            'crossover_validation_failures': 0
+        }
         # Validate the AST
         is_valid, error = validate_ast(self.ast_tree)
         if not is_valid:
@@ -180,158 +194,362 @@ class ProgramAST:
     def _point_mutate(self, node: ast.AST) -> ast.AST:
         """Perform point mutation on a leaf node."""
         if isinstance(node, ast.Constant):
-            return self._generate_random_constant()
+            # Generate a different constant value
+            while True:
+                new_node = self._generate_random_constant()
+                if new_node.value != node.value:
+                    return new_node
         elif isinstance(node, ast.Name):
-            return self._generate_random_name()
+            # Generate a different variable name
+            while True:
+                new_node = self._generate_random_name()
+                if new_node.id != node.id:
+                    return new_node
         return node
 
     def _subtree_mutate(self, node: ast.AST) -> ast.AST:
         """Replace a subtree with a newly generated one."""
-        return self._generate_random_expression(max_depth=2)
+        # Generate a new subtree with different structure
+        new_subtree = self._generate_random_expression(max_depth=3)
+        # Ensure the new subtree is different
+        if ast.dump(new_subtree) == ast.dump(node):
+            # If identical, modify one of its children
+            if isinstance(new_subtree, ast.BinOp):
+                new_subtree.op = self._generate_random_operator()
+            elif isinstance(new_subtree, ast.Compare):
+                new_subtree.ops = [self._generate_random_operator()]
+            elif isinstance(new_subtree, ast.Call):
+                new_subtree.func = self._generate_random_name()
+        return new_subtree
 
     def _functional_mutate(self, node: ast.AST) -> ast.AST:
         """Change operators or function calls while preserving arity."""
         if isinstance(node, ast.BinOp):
-            return ast.BinOp(
-                left=node.left,
-                op=self._generate_random_operator(),
-                right=node.right
-            )
+            # Try different operators until we find one that's different
+            while True:
+                new_op = self._generate_random_operator()
+                if not isinstance(new_op, type(node.op)):
+                    return ast.BinOp(
+                        left=node.left,
+                        op=new_op,
+                        right=node.right
+                    )
         elif isinstance(node, ast.Compare):
-            return ast.Compare(
-                left=node.left,
-                ops=[self._generate_random_operator()],
-                comparators=node.comparators
-            )
+            # Try different comparison operators
+            while True:
+                new_op = self._generate_random_operator()
+                if not isinstance(new_op, type(node.ops[0])):
+                    return ast.Compare(
+                        left=node.left,
+                        ops=[new_op],
+                        comparators=node.comparators
+                    )
         elif isinstance(node, ast.Call):
-            return ast.Call(
-                func=self._generate_random_name(),
-                args=node.args,
-                keywords=node.keywords
-            )
+            # Try different function names or attributes
+            func = node.func
+            if isinstance(func, ast.Name):
+                while True:
+                    new_func = self._generate_random_name()
+                    if new_func.id != func.id:
+                        return ast.Call(
+                            func=new_func,
+                            args=node.args,
+                            keywords=node.keywords
+                        )
+            elif isinstance(func, ast.Attribute):
+                # Mutate the attribute name or the value
+                if random.random() < 0.5:
+                    # Change the attribute name
+                    new_attr = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+                    return ast.Call(
+                        func=ast.Attribute(value=func.value, attr=new_attr, ctx=func.ctx),
+                        args=node.args,
+                        keywords=node.keywords
+                    )
+                else:
+                    # Change the value (e.g., os -> random name)
+                    new_value = self._generate_random_name()
+                    return ast.Call(
+                        func=ast.Attribute(value=new_value, attr=func.attr, ctx=func.ctx),
+                        args=node.args,
+                        keywords=node.keywords
+                    )
         return node
 
-    def mutate(self, mutation_rate: float = 0.1) -> 'ProgramAST':
-        """Apply random mutations to the program AST."""
+    def _attempt_macro_mutation(self) -> Optional[ast.AST]:
+        """Attempt a more substantial mutation when normal mutations fail."""
+        try:
+            all_nodes = get_all_nodes(self.ast_tree)
+            if not all_nodes:
+                return None
+            # Try to mutate import statements
+            for node in all_nodes:
+                if isinstance(node, ast.Import):
+                    # Change the imported module name
+                    for alias in node.names:
+                        alias.name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+                    return self.ast_tree
+            # Try to mutate function signature
+            for node in all_nodes:
+                if isinstance(node, ast.FunctionDef):
+                    # Change the function name
+                    node.name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+                    # Change argument names
+                    for arg in node.args.args:
+                        arg.arg = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+                    return self.ast_tree
+            # As a last resort, generate a new random program
+            return self._generate_random_program()
+        except Exception as e:
+            logger.error(f"Macro mutation failed: {e}")
+            return None
+
+    def mutate(self, mutation_rate: float = 0.1, max_retries: int = 10) -> 'ProgramAST':
+        """Apply random mutations to the program AST. Prevent infinite recursion by limiting retries."""
+        self.stats['mutation_attempts'] += 1
+        
         if random.random() > mutation_rate:
+            self.stats['mutation_noop'] += 1
             return ProgramAST(ast_tree=ast.copy_location(
                 ast.fix_missing_locations(clone_ast(self.ast_tree)),
                 self.ast_tree
             ))
 
-        # Get all nodes in the AST
         all_nodes = get_all_nodes(self.ast_tree)
         if not all_nodes:
+            self.stats['mutation_noop'] += 1
             return self
 
-        # Select a random node to mutate
-        target_node = random.choice(all_nodes)
+        original_hash = hash(ast.dump(self.ast_tree))
+        mutated = None
+        for attempt in range(max_retries):
+            target_node = random.choice(all_nodes)
+            mutation_type = random.choice(['point', 'subtree', 'functional'])
+            if mutation_type == 'point' and len(list(ast.iter_child_nodes(target_node))) == 0:
+                mutated_node = self._point_mutate(target_node)
+            elif mutation_type == 'subtree':
+                mutated_node = self._subtree_mutate(target_node)
+            else:
+                mutated_node = self._functional_mutate(target_node)
+            new_ast = replace_subtree(self.ast_tree, target_node, mutated_node)
+            is_valid, error = validate_ast(new_ast)
+            if is_valid:
+                mutated = ProgramAST(ast_tree=new_ast)
+                if hash(ast.dump(mutated.ast_tree)) != original_hash:
+                    self.stats['mutation_effective'] += 1
+                    return mutated
+            # On final attempt, try a more substantial mutation
+            if attempt == max_retries - 2:
+                new_ast = self._attempt_macro_mutation()
+                if new_ast is not None:
+                    is_valid, error = validate_ast(new_ast)
+                    if is_valid:
+                        mutated = ProgramAST(ast_tree=new_ast)
+                        if hash(ast.dump(mutated.ast_tree)) != original_hash:
+                            self.stats['mutation_effective'] += 1
+                            return mutated
+        # If all retries fail, return a clone of the original
+        self.stats['mutation_noop'] += 1
+        return ProgramAST(ast_tree=ast.copy_location(
+            ast.fix_missing_locations(clone_ast(self.ast_tree)),
+            self.ast_tree
+        ))
 
-        # Choose mutation type
-        mutation_type = random.choice(['point', 'subtree', 'functional'])
-        
-        # Apply mutation
-        if mutation_type == 'point' and len(list(ast.iter_child_nodes(target_node))) == 0:
-            mutated_node = self._point_mutate(target_node)
-        elif mutation_type == 'subtree':
-            mutated_node = self._subtree_mutate(target_node)
-        else:  # functional
-            mutated_node = self._functional_mutate(target_node)
-
-        # Create new AST with mutation
-        new_ast = replace_subtree(self.ast_tree, target_node, mutated_node)
-        
-        # Validate the mutated AST
-        is_valid, error = validate_ast(new_ast)
-        if not is_valid:
-            # If mutation is invalid, try again with a different node
-            return self.mutate(mutation_rate)
-            
-        return ProgramAST(ast_tree=new_ast)
-    
-    @staticmethod
-    def crossover(parent1: 'ProgramAST', parent2: 'ProgramAST') -> Tuple['ProgramAST', 'ProgramAST']:
+    @classmethod
+    def crossover(cls, parent1: 'ProgramAST', parent2: 'ProgramAST') -> Tuple['ProgramAST', 'ProgramAST']:
         """
-        Perform subtree crossover between two program ASTs.
+        Perform subtree crossover between this program and another parent.
         
-        This implementation:
-        1. Selects compatible subtrees from both parents
-        2. Ensures type safety by checking node types
-        3. Maintains program validity through validation
-        4. Handles different AST node types appropriately
+        Note: Not every crossover operation will produce offspring different 
+        from both parents. This is normal genetic programming behavior, especially 
+        with simple programs or limited compatible subtrees. The crossover success 
+        rate typically ranges from 30-70% depending on program complexity and diversity.
         
-        Args:
-            parent1: First parent program AST
-            parent2: Second parent program AST
-            
         Returns:
-            Tuple of two new ProgramAST instances resulting from crossover
+            tuple: (child1, child2) - Two new ProgramAST instances
         """
-        def get_compatible_subtrees(ast_tree: ast.AST) -> List[Tuple[ast.AST, ast.AST]]:
-            """Get all valid subtree pairs that can be swapped."""
-            compatible_pairs = []
-            nodes1 = get_all_nodes(ast_tree)
-            
-            for node1 in nodes1:
-                # Skip module and function definition nodes to maintain program structure
-                if isinstance(node1, (ast.Module, ast.FunctionDef)):
-                    continue
-                    
-                # Get all nodes from parent2 that are of the same type
-                nodes2 = [n for n in get_all_nodes(parent2.ast_tree) 
-                         if isinstance(n, type(node1)) and not isinstance(n, (ast.Module, ast.FunctionDef))]
-                
-                for node2 in nodes2:
-                    compatible_pairs.append((node1, node2))
-            
-            return compatible_pairs
+        parent1.stats['crossover_attempts'] += 1
+        parent2.stats['crossover_attempts'] += 1
         
-        def perform_crossover(ast1: ast.AST, ast2: ast.AST) -> Tuple[ast.AST, ast.AST]:
-            """Perform the actual subtree swap between two ASTs."""
-            # Get compatible subtree pairs
-            compatible_pairs = get_compatible_subtrees(ast1)
-            if not compatible_pairs:
-                return ast1, ast2
-                
-            # Select a random pair of compatible subtrees
-            node1, node2 = random.choice(compatible_pairs)
-            
-            # Create copies of the ASTs
-            new_ast1 = clone_ast(ast1)
-            new_ast2 = clone_ast(ast2)
-            
-            # Find corresponding nodes in the copied ASTs
-            for node in ast.walk(new_ast1):
-                if isinstance(node, type(node1)) and ast.dump(node) == ast.dump(node1):
-                    node1 = node
-                    break
-                    
-            for node in ast.walk(new_ast2):
-                if isinstance(node, type(node2)) and ast.dump(node) == ast.dump(node2):
-                    node2 = node
-                    break
-            
-            # Perform the swap
-            new_ast1 = replace_subtree(new_ast1, node1, node2)
-            new_ast2 = replace_subtree(new_ast2, node2, node1)
-            
-            return new_ast1, new_ast2
+        # Get compatible subtrees from both parents with location information
+        p1_subtrees = cls.get_compatible_subtrees(parent1.ast_tree)
+        p2_subtrees = cls.get_compatible_subtrees(parent2.ast_tree)
         
-        # Perform crossover
-        child1_ast, child2_ast = perform_crossover(parent1.ast_tree, parent2.ast_tree)
+        # Log the number of compatible subtrees found
+        logger.debug(f"Parent 1 compatible subtrees: {len(p1_subtrees)}")
+        logger.debug(f"Parent 2 compatible subtrees: {len(p2_subtrees)}")
         
-        # Validate the resulting ASTs
+        # If no compatible subtrees, return copies of parents
+        if not p1_subtrees or not p2_subtrees:
+            logger.warning("No compatible subtrees found for crossover. Returning parent copies.")
+            parent1.stats['crossover_parent1'] += 1
+            parent2.stats['crossover_parent2'] += 1
+            return cls(ast_tree=copy.deepcopy(parent1.ast_tree)), cls(ast_tree=copy.deepcopy(parent2.ast_tree))
+        
+        # Select random subtrees from each parent
+        p1_subtree_info = random.choice(p1_subtrees)
+        p2_subtree_info = random.choice(p2_subtrees)
+        
+        p1_subtree, p1_parent, p1_field, p1_index = p1_subtree_info
+        p2_subtree, p2_parent, p2_field, p2_index = p2_subtree_info
+        
+        # Log the selected subtrees
+        logger.debug(f"Selected subtree from Parent 1: {ast.unparse(p1_subtree)}")
+        logger.debug(f"Selected subtree from Parent 2: {ast.unparse(p2_subtree)}")
+        
+        # Create copies of parent ASTs
+        child1_ast = copy.deepcopy(parent1.ast_tree)
+        child2_ast = copy.deepcopy(parent2.ast_tree)
+        
+        # Replace subtrees using structural equality
+        child1_ast = cls.replace_subtree(child1_ast, p1_subtree, p2_subtree)
+        child2_ast = cls.replace_subtree(child2_ast, p2_subtree, p1_subtree)
+        
+        # Log the resulting ASTs
+        logger.debug(f"Child 1 AST after crossover: {ast.unparse(child1_ast)}")
+        logger.debug(f"Child 2 AST after crossover: {ast.unparse(child2_ast)}")
+        
+        # Validate resulting ASTs
         is_valid1, error1 = validate_ast(child1_ast)
         is_valid2, error2 = validate_ast(child2_ast)
         
-        # If either child is invalid, return copies of the parents
-        if not (is_valid1 and is_valid2):
-            return (
-                ProgramAST(ast_tree=clone_ast(parent1.ast_tree)),
-                ProgramAST(ast_tree=clone_ast(parent2.ast_tree))
-            )
+        if not is_valid1 or not is_valid2:
+            logger.warning(f"Invalid offspring produced. Child 1 error: {error1}, Child 2 error: {error2}")
+            parent1.stats['crossover_validation_failures'] += 1
+            parent2.stats['crossover_validation_failures'] += 1
+            return cls(ast_tree=copy.deepcopy(parent1.ast_tree)), cls(ast_tree=copy.deepcopy(parent2.ast_tree))
         
-        return ProgramAST(ast_tree=child1_ast), ProgramAST(ast_tree=child2_ast)
+        child1 = cls(ast_tree=child1_ast)
+        child2 = cls(ast_tree=child2_ast)
+        
+        # Track novel offspring
+        if ast.dump(child1.ast_tree) != ast.dump(parent1.ast_tree) and ast.dump(child1.ast_tree) != ast.dump(parent2.ast_tree):
+            parent1.stats['crossover_novel'] += 1
+        if ast.dump(child2.ast_tree) != ast.dump(parent1.ast_tree) and ast.dump(child2.ast_tree) != ast.dump(parent2.ast_tree):
+            parent2.stats['crossover_novel'] += 1
+            
+        return child1, child2
+
+    @staticmethod
+    def get_compatible_subtrees(ast_tree: ast.AST) -> List[Tuple[ast.AST, ast.AST, str, Optional[int]]]:
+        """
+        Get all valid subtrees that can be swapped during crossover.
+        Returns a list of tuples containing (node, parent, field_name, index).
+        
+        Node filtering rules:
+        1. Skip module and function definition nodes to maintain program structure
+        2. Skip context nodes (Load, Store, Del) as they're rarely meaningful targets
+        3. Skip operator nodes when they're standalone, but allow them within expressions
+        4. Allow expression nodes containing operators (BinOp, Compare, Call)
+        5. Allow statement nodes that don't affect program structure (Expr, Assign)
+        6. Skip nodes that would break program semantics (e.g., function parameters)
+        
+        Returns:
+            List[Tuple[ast.AST, ast.AST, str, Optional[int]]]: List of compatible subtrees
+        """
+        # Nodes that should never be swapped
+        skip_types = (
+            ast.Module,  # Top-level structure
+            ast.FunctionDef,  # Function definitions
+            ast.arg,  # Function parameters
+            ast.Load, ast.Store, ast.Del,  # Context nodes
+        )
+        
+        # Nodes that can be swapped if they're part of an expression
+        expression_nodes = (
+            ast.BinOp,  # Binary operations
+            ast.Compare,  # Comparisons
+            ast.Call,  # Function calls
+            ast.Constant,  # Constants
+            ast.Name,  # Variable names
+            ast.Attribute,  # Attribute access
+            ast.Subscript,  # Subscripting
+            ast.List, ast.Tuple, ast.Dict,  # Collection literals
+        )
+        
+        # Nodes that can be swapped as standalone statements
+        statement_nodes = (
+            ast.Expr,  # Expression statements
+            ast.Assign,  # Assignment statements
+            ast.AugAssign,  # Augmented assignment
+            ast.Return,  # Return statements
+        )
+        
+        compatible_subtrees = []
+        
+        for parent in ast.walk(ast_tree):
+            for field, value in ast.iter_fields(parent):
+                if isinstance(value, list):
+                    for i, item in enumerate(value):
+                        if isinstance(item, ast.AST):
+                            # Skip nodes that should never be swapped
+                            if isinstance(item, skip_types):
+                                continue
+                                
+                            # Allow expression nodes and their children
+                            if isinstance(item, expression_nodes):
+                                compatible_subtrees.append((item, parent, field, i))
+                            # Allow statement nodes
+                            elif isinstance(item, statement_nodes):
+                                compatible_subtrees.append((item, parent, field, i))
+                            # Allow operators within expressions
+                            elif isinstance(parent, expression_nodes):
+                                compatible_subtrees.append((item, parent, field, i))
+                                
+                elif isinstance(value, ast.AST):
+                    # Skip nodes that should never be swapped
+                    if isinstance(value, skip_types):
+                        continue
+                        
+                    # Allow expression nodes and their children
+                    if isinstance(value, expression_nodes):
+                        compatible_subtrees.append((value, parent, field, None))
+                    # Allow statement nodes
+                    elif isinstance(value, statement_nodes):
+                        compatible_subtrees.append((value, parent, field, None))
+                    # Allow operators within expressions
+                    elif isinstance(parent, expression_nodes):
+                        compatible_subtrees.append((value, parent, field, None))
+                        
+        return compatible_subtrees
+
+    @staticmethod
+    def replace_subtree(ast_tree: ast.AST, old_subtree: ast.AST, new_subtree: ast.AST) -> ast.AST:
+        """
+        Replace a subtree in an AST with another subtree using structural equality.
+        """
+        new_ast = ast.copy_location(
+            ast.fix_missing_locations(clone_ast(ast_tree)),
+            ast_tree
+        )
+        
+        # Find all nodes that structurally match the old subtree
+        for parent in ast.walk(new_ast):
+            for field, old_value in ast.iter_fields(parent):
+                if isinstance(old_value, list):
+                    for i, item in enumerate(old_value):
+                        if isinstance(item, ast.AST) and ast.dump(item) == ast.dump(old_subtree):
+                            old_value[i] = ast.copy_location(
+                                ast.fix_missing_locations(clone_ast(new_subtree)),
+                                item
+                            )
+                elif isinstance(old_value, ast.AST) and ast.dump(old_value) == ast.dump(old_subtree):
+                    setattr(parent, field, ast.copy_location(
+                        ast.fix_missing_locations(clone_ast(new_subtree)),
+                        old_value
+                    ))
+                    
+        return new_ast
+
+    def print_genetic_stats(self):
+        """Report on genetic operator effectiveness."""
+        mut_success_rate = self.stats['mutation_effective'] / max(1, self.stats['mutation_attempts'])
+        cross_novel_rate = self.stats['crossover_novel'] / max(1, self.stats['crossover_attempts'])
+        
+        logger.info(f"Mutation success rate: {mut_success_rate:.1%}")
+        logger.info(f"Novel crossover rate: {cross_novel_rate:.1%}")
+        logger.info(f"Mutation no-op rate: {self.stats['mutation_noop'] / max(1, self.stats['mutation_attempts']):.1%}")
+        logger.info(f"Crossover validation failures: {self.stats['crossover_validation_failures']}")
 
 class ProgramGenerator:
     """
