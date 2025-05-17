@@ -169,8 +169,7 @@ class EvolutionEngine:
         # Check if resource monitor allows evaluation
         if self.resource_monitor and not self.resource_monitor.can_proceed():
             logger.warning("Resource constraints exceeded. Throttling evaluation.")
-            self.fitness_scores = [s if i < len(self.fitness_scores) else 0
-                                   for i, s in enumerate(self.population)]
+            self.fitness_scores = [float('-inf')] * len(self.population)
             return
         
         # Start timing the evaluation
@@ -214,6 +213,7 @@ class EvolutionEngine:
         fitness_scores = []
         for genome in self.population:
             fitness = self._evaluate_genome(genome)
+            genome.set_fitness(fitness)
             fitness_scores.append(fitness)
         return fitness_scores
     
@@ -234,6 +234,9 @@ class EvolutionEngine:
             with multiprocessing.Pool(processes=worker_count) as pool:
                 # Map the evaluation function to each genome
                 fitness_scores = pool.map(self._evaluate_genome_wrapper, self.population)
+                # Set fitness values for each genome
+                for genome, fitness in zip(self.population, fitness_scores):
+                    genome.set_fitness(fitness)
             return fitness_scores
         except Exception as e:
             logger.error(f"Error in parallel evaluation: {str(e)}")

@@ -10,7 +10,8 @@ import unittest
 import argparse
 
 # Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
 
 def discover_and_run_tests(test_type="all", verbose=False):
     """
@@ -29,19 +30,22 @@ def discover_and_run_tests(test_type="all", verbose=False):
     # Set verbosity level
     verbosity = 2 if verbose else 1
     
+    # Get absolute path to tests directory
+    tests_dir = os.path.join(project_root, "tests")
+    
     # Discover tests based on type
     if test_type in ["unit", "all"]:
-        unit_tests = loader.discover(os.path.join(os.path.dirname(__file__), "unit"))
+        unit_tests = loader.discover(os.path.join(tests_dir, "unit"), pattern="test_*.py")
         suite.addTests(unit_tests)
         print(f"Discovered {unit_tests.countTestCases()} unit tests")
     
     if test_type in ["integration", "all"]:
-        integration_tests = loader.discover(os.path.join(os.path.dirname(__file__), "integration"))
+        integration_tests = loader.discover(os.path.join(tests_dir, "integration"), pattern="test_*.py")
         suite.addTests(integration_tests)
         print(f"Discovered {integration_tests.countTestCases()} integration tests")
     
     if test_type in ["functional", "all"]:
-        functional_tests = loader.discover(os.path.join(os.path.dirname(__file__), "functional"))
+        functional_tests = loader.discover(os.path.join(tests_dir, "functional"), pattern="test_*.py")
         suite.addTests(functional_tests)
         print(f"Discovered {functional_tests.countTestCases()} functional tests")
     

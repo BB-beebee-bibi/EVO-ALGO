@@ -9,13 +9,15 @@ import tempfile
 import json
 from unittest.mock import patch, MagicMock
 
-# Add the parent directory to the path so we can import trisolaris modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 from trisolaris.tasks import BluetoothScannerTask
 from trisolaris.core import CodeGenome, EvolutionEngine
 from trisolaris.evaluation import FitnessEvaluator
 
+# Skip tests if bluepy is not available
+try:
+    import bluepy
+except ImportError:
+    bluepy = None
 
 # Sample Bluetooth device data for mocking
 SAMPLE_DEVICES = [
@@ -52,6 +54,7 @@ class TestBluetoothScannerTask(unittest.TestCase):
         import shutil
         shutil.rmtree(self.temp_dir)
     
+    @unittest.skipIf(bluepy is None, "bluepy is not available")
     @patch('subprocess.run')
     @patch('bluepy.btle.Scanner')
     def test_task_template(self, mock_scanner, mock_subprocess):
@@ -167,6 +170,7 @@ def main():
         # Should add imports and shebang if they're missing
         self.assertIn("#!/usr/bin", processed_code)
     
+    @unittest.skipIf(bluepy is None, "bluepy is not available")
     @patch('bluepy.btle.Scanner')
     def test_evolution_integration(self, mock_scanner):
         """Test integrating the task with the evolution engine."""

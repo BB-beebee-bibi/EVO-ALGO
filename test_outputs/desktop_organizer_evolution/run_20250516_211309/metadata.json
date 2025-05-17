@@ -1,0 +1,45 @@
+{
+  "task": "desktop_organizer",
+  "description": "Evolve code to organize desktop files by content type",
+  "population_size": 20,
+  "num_generations": 5,
+  "mutation_rate": 0.1,
+  "crossover_rate": 0.7,
+  "ethics_level": "basic",
+  "use_islands": false,
+  "start_time": "2025-05-16T21:13:09.432990",
+  "end_time": "2025-05-16T21:13:15.077907",
+  "best_fitness": 0.0,
+  "generation_metrics": [
+    {
+      "generation": 0,
+      "best_fitness": -Infinity,
+      "time_seconds": 1.111831,
+      "diversity": null
+    },
+    {
+      "generation": 1,
+      "best_fitness": -Infinity,
+      "time_seconds": 1.109812,
+      "diversity": null
+    },
+    {
+      "generation": 2,
+      "best_fitness": -Infinity,
+      "time_seconds": 1.111054,
+      "diversity": null
+    },
+    {
+      "generation": 3,
+      "best_fitness": -Infinity,
+      "time_seconds": 1.111345,
+      "diversity": null
+    },
+    {
+      "generation": 4,
+      "best_fitness": -Infinity,
+      "time_seconds": 1.11108,
+      "diversity": null
+    }
+  ]
+}

@@ -14,11 +14,13 @@ import logging
 import importlib
 import shutil
 from typing import Dict, Any, Tuple, List, Optional
+from pathlib import Path
 
 # Make sure we can import from parent directory
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from trisolaris.core import EvolutionEngine, CodeGenome
+from trisolaris.config import BaseConfig, EvolutionConfig
 from trisolaris.evaluation import FitnessEvaluator, EthicalBoundaryEnforcer
 from trisolaris.managers.resource import ResourceSteward
 from trisolaris.managers.repository import GenomeRepository
@@ -207,12 +209,20 @@ class TaskRunner:
             engine = island_manager
         else:
             # Set up the regular evolution engine
+            config = BaseConfig(
+                evolution=EvolutionConfig(
+                    population_size=self.population_size,
+                    mutation_rate=self.mutation_rate,
+                    crossover_rate=self.crossover_rate,
+                    selection_pressure=1.0,
+                    elitism_ratio=0.1
+                )
+            )
+            
             engine = EvolutionEngine(
-                population_size=self.population_size,
                 evaluator=evaluator,
-                mutation_rate=self.mutation_rate,
-                crossover_rate=self.crossover_rate,
                 genome_class=CodeGenome,
+                config=config,
                 resource_monitor=resource_monitor,
                 repository=repository,
                 diversity_guardian=diversity_guardian

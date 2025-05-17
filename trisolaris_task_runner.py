@@ -23,7 +23,7 @@ from trisolaris.managers.repository import GenomeRepository
 from trisolaris.managers.diversity import DiversityGuardian
 from trisolaris.managers.island import IslandEcosystemManager
 from trisolaris.utils.paths import create_timestamped_output_dir, create_generation_dir
-from trisolaris.tasks import TaskInterface, DriveScannerTask, NetworkScannerTask, BluetoothScannerTask
+from trisolaris.tasks import TaskInterface, DriveScannerTask, NetworkScannerTask, BluetoothScannerTask, DesktopOrganizerTask
 
 # Configure logging
 logging.basicConfig(
@@ -40,7 +40,8 @@ logger = logging.getLogger(__name__)
 TASK_REGISTRY = {
     "drive_scanner": DriveScannerTask,
     "network_scanner": NetworkScannerTask,
-    "bluetooth_scanner": BluetoothScannerTask
+    "bluetooth_scanner": BluetoothScannerTask,
+    "desktop_organizer": DesktopOrganizerTask
 }
 
 def setup_ethical_filter(task: TaskInterface, level: str, output_dir: str) -> Optional[EthicalBoundaryEnforcer]:
@@ -336,7 +337,7 @@ def main():
     
     # Initialize diversity guardian
     diversity_guardian = DiversityGuardian(
-        threshold=args.diversity_threshold
+        min_diversity=args.diversity_threshold
     )
     
     # Set up either island model or regular evolution engine

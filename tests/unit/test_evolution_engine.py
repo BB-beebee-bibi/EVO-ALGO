@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from trisolaris.core import EvolutionEngine, CodeGenome
 from trisolaris.evaluation import FitnessEvaluator
+from trisolaris.config import BaseConfig
 
 
 class MockEvaluator:
@@ -37,13 +38,24 @@ class TestEvolutionEngine(unittest.TestCase):
     def setUp(self):
         """Set up test environment."""
         self.mock_evaluator = MockEvaluator()
+        
+        # Create test configuration
+        self.config = BaseConfig()
+        self.config.evolution.population_size = 10
+        self.config.evolution.mutation_rate = 0.1
+        self.config.evolution.crossover_rate = 0.7
+        self.config.evolution.selection_pressure = 1.0
+        self.config.evolution.elitism_ratio = 0.1
+        
+        # Initialize engine with configuration
         self.engine = EvolutionEngine(
-            population_size=10,
             evaluator=self.mock_evaluator,
-            mutation_rate=0.1,
-            crossover_rate=0.7,
-            genome_class=CodeGenome
+            genome_class=CodeGenome,
+            config=self.config
         )
+        
+        # Initialize population
+        self.engine.initialize_population()
     
     def test_initialization(self):
         """Test that the engine initializes correctly."""
@@ -66,13 +78,17 @@ class TestEvolutionEngine(unittest.TestCase):
         for genome in self.engine.population:
             self.assertTrue(hasattr(genome, 'fitness'))
             self.assertIsNotNone(genome.fitness)
+            self.assertTrue(hasattr(genome, 'fitness_history'))
+            self.assertTrue(len(genome.fitness_history) > 0)
+            self.assertTrue(hasattr(genome, 'evaluation_count'))
+            self.assertEqual(genome.evaluation_count, 1)
     
     def test_selection(self):
         """Test parent selection."""
         # Create population with known fitness values
         self.engine.population = [CodeGenome() for _ in range(10)]
         for i, genome in enumerate(self.engine.population):
-            genome.fitness = i / 10.0  # Fitness from 0.0 to 0.9
+            genome.set_fitness(i / 10.0)  # Fitness from 0.0 to 0.9
         
         # Select parents
         parents = self.engine.select_parents()
@@ -81,7 +97,7 @@ class TestEvolutionEngine(unittest.TestCase):
         self.assertGreaterEqual(len(parents), 1)
         
         # Higher fitness genomes should be more likely to be selected
-        avg_fitness = sum(genome.fitness for genome in parents) / len(parents)
+        avg_fitness = sum(genome.get_fitness() for genome in parents) / len(parents)
         self.assertGreater(avg_fitness, 0.3)  # Average fitness should be higher than random
     
     def test_crossover(self):
@@ -92,11 +108,11 @@ class TestEvolutionEngine(unittest.TestCase):
         
         # Force crossover
         with patch('random.random', return_value=0.1):  # Below crossover rate
-            offspring = self.engine._crossover(parent1, parent2)
+            offspring = self.engine.create_offspring([parent1, parent2])
         
         # Offspring should be different from both parents
-        self.assertNotEqual(offspring.to_source(), parent1.to_source())
-        self.assertNotEqual(offspring.to_source(), parent2.to_source())
+        self.assertNotEqual(offspring[0].to_source(), parent1.to_source())
+        self.assertNotEqual(offspring[0].to_source(), parent2.to_source())
     
     def test_mutation(self):
         """Test mutation operation."""
@@ -106,10 +122,10 @@ class TestEvolutionEngine(unittest.TestCase):
         
         # Force mutation
         with patch('random.random', return_value=0.05):  # Below mutation rate
-            mutated = self.engine._mutate(genome)
+            mutated = self.engine.create_offspring([genome])
         
         # Mutated genome should be different
-        self.assertNotEqual(mutated.to_source(), original_source)
+        self.assertNotEqual(mutated[0].to_source(), original_source)
     
     def test_evolution_improvement(self):
         """Test that evolution improves fitness over generations."""
@@ -122,7 +138,7 @@ class TestEvolutionEngine(unittest.TestCase):
         # Run evolution for a few generations
         for gen in range(3):
             self.engine.evaluate_population()
-            best_fitness = max(genome.fitness for genome in self.engine.population)
+            best_fitness = max(genome.get_fitness() for genome in self.engine.population)
             generation_fitnesses.append(best_fitness)
             
             # Create next generation

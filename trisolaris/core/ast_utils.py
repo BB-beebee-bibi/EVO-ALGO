@@ -70,13 +70,29 @@ class ModernMutationTransformer(ast.NodeTransformer):
                 except:
                     return node
             elif isinstance(node.value, str):
-                # String mutation
-                mutator = random.choice(self.str_mutators)
-                try:
-                    new_value = mutator(node.value)
-                    return ast.Constant(value=new_value)
-                except:
-                    return node
+                # String mutation - preserve newlines and quotes
+                if '\n' in node.value:
+                    # For multiline strings, only mutate content between newlines
+                    lines = node.value.split('\n')
+                    mutated_lines = []
+                    for line in lines:
+                        if random.random() < self.mutation_rate:
+                            mutator = random.choice(self.str_mutators)
+                            try:
+                                mutated_lines.append(mutator(line))
+                            except:
+                                mutated_lines.append(line)
+                        else:
+                            mutated_lines.append(line)
+                    return ast.Constant(value='\n'.join(mutated_lines))
+                else:
+                    # For single-line strings, apply normal mutation
+                    mutator = random.choice(self.str_mutators)
+                    try:
+                        new_value = mutator(node.value)
+                        return ast.Constant(value=new_value)
+                    except:
+                        return node
             elif isinstance(node.value, bool):
                 # Boolean mutation
                 return ast.Constant(value=not node.value)

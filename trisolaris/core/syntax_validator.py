@@ -114,10 +114,10 @@ class SyntaxValidator:
                 - Number of repairs made
         """
         # Pattern to find string literals with newlines
-        pattern = r'print\s*\(\s*"(\s*)\n([^"]*?)"\s*\)'
+        pattern = r'print\s*\(\s*"([^"]*?)\n([^"]*?)"\s*\)'
         
         # Replace with proper escaped newlines
-        repaired_code, count = re.subn(pattern, r'print("\n\2")', code)
+        repaired_code, count = re.subn(pattern, r'print("\1\\n\2")', code)
         
         return repaired_code, count
     
@@ -198,29 +198,27 @@ class SyntaxValidator:
         
         repair_count = 0
         lines = code.split('\n')
+        repaired_lines = []
         
-        for i, line in enumerate(lines):
-            # Skip comments and docstrings
-            if line.strip().startswith('#') or line.strip().startswith("'''") or line.strip().startswith('"""'):
-                continue
+        for line in lines:
+            # Count opening and closing delimiters
+            open_count = {d: line.count(d) for d in delimiters.keys()}
+            close_count = {d: line.count(d) for d in delimiters.values()}
             
-            # Check for unbalanced delimiters in this line
-            stack = []
-            for char in line:
-                if char in delimiters:
-                    stack.append(char)
-                elif char in delimiters.values():
-                    if not stack or delimiters[stack.pop()] != char:
-                        # Unbalanced closing delimiter, ignore it
-                        pass
+            # Check for unbalanced delimiters
+            for open_delim, close_delim in delimiters.items():
+                if open_count[open_delim] > close_count[close_delim]:
+                    # Add missing closing delimiter
+                    line += close_delim * (open_count[open_delim] - close_count[close_delim])
+                    repair_count += 1
+                elif close_count[close_delim] > open_count[open_delim]:
+                    # Add missing opening delimiter
+                    line = open_delim * (close_count[close_delim] - open_count[open_delim]) + line
+                    repair_count += 1
             
-            # Add missing closing delimiters
-            if stack:
-                closing = ''.join(delimiters[char] for char in reversed(stack))
-                lines[i] = line + closing
-                repair_count += len(stack)
+            repaired_lines.append(line)
         
-        return '\n'.join(lines), repair_count
+        return '\n'.join(repaired_lines), repair_count
     
     @staticmethod
     def _repair_missing_colons(code: str) -> Tuple[str, int]:
@@ -237,59 +235,56 @@ class SyntaxValidator:
         """
         # Pattern to find compound statements without colons
         patterns = [
-            (r'^\s*(if\s+.*?)\s*$', r'\1:'),
-            (r'^\s*(elif\s+.*?)\s*$', r'\1:'),
-            (r'^\s*(else)\s*$', r'\1:'),
-            (r'^\s*(for\s+.*?)\s*$', r'\1:'),
-            (r'^\s*(while\s+.*?)\s*$', r'\1:'),
-            (r'^\s*(def\s+.*?\))\s*$', r'\1:'),
-            (r'^\s*(class\s+.*?)\s*$', r'\1:'),
-            (r'^\s*(try)\s*$', r'\1:'),
-            (r'^\s*(except\s+.*?)\s*$', r'\1:'),
-            (r'^\s*(except)\s*$', r'\1:'),
-            (r'^\s*(finally)\s*$', r'\1:')
+            (r'^\s*(def\s+[^:]+)(?!:)', r'\1:'),
+            (r'^\s*(class\s+[^:]+)(?!:)', r'\1:'),
+            (r'^\s*(if\s+[^:]+)(?!:)', r'\1:'),
+            (r'^\s*(elif\s+[^:]+)(?!:)', r'\1:'),
+            (r'^\s*(else)(?!:)', r'\1:'),
+            (r'^\s*(for\s+[^:]+)(?!:)', r'\1:'),
+            (r'^\s*(while\s+[^:]+)(?!:)', r'\1:'),
+            (r'^\s*(try)(?!:)', r'\1:'),
+            (r'^\s*(except\s+[^:]+)(?!:)', r'\1:'),
+            (r'^\s*(finally)(?!:)', r'\1:')
         ]
         
-        lines = code.split('\n')
         repair_count = 0
+        lines = code.split('\n')
+        repaired_lines = []
         
-        for i, line in enumerate(lines):
+        for line in lines:
             for pattern, replacement in patterns:
                 if re.match(pattern, line):
-                    lines[i] = re.sub(pattern, replacement, line)
+                    line = re.sub(pattern, replacement, line)
                     repair_count += 1
                     break
+            repaired_lines.append(line)
         
-        return '\n'.join(lines), repair_count
-
+        return '\n'.join(repaired_lines), repair_count
+    
     @staticmethod
     def validate_and_repair(code: str) -> Tuple[str, bool, List[str]]:
         """
-        Validate the code and repair it if necessary.
+        Validate code and attempt to repair if invalid.
         
         Args:
             code: The source code to validate and repair
             
         Returns:
             Tuple containing:
-                - Valid code (original or repaired)
-                - Boolean indicating if the code was valid initially
+                - Repaired code (or original if repair failed)
+                - Boolean indicating if original code was valid
                 - List of applied repairs
         """
-        # First check if the code is already valid
+        # First validate
         is_valid, _, _ = SyntaxValidator.validate(code)
         
         if is_valid:
             return code, True, []
         
-        # If not valid, attempt to repair
-        repaired_code, applied_repairs = SyntaxValidator.repair(code)
+        # If invalid, attempt repair
+        repaired_code, repairs = SyntaxValidator.repair(code)
         
-        # Validate the repaired code
-        is_repaired_valid, _, _ = SyntaxValidator.validate(repaired_code)
+        # Validate repaired code
+        is_valid, _, _ = SyntaxValidator.validate(repaired_code)
         
-        if is_repaired_valid:
-            return repaired_code, False, applied_repairs
-        else:
-            # If repair failed, return the original code
-            return code, False, []
+        return repaired_code, False, repairs

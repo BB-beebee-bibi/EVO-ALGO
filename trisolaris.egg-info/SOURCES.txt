@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+trisolaris/__init__.py
+trisolaris/config.py
+trisolaris/task_runner.py
+trisolaris.egg-info/PKG-INFO
+trisolaris.egg-info/SOURCES.txt
+trisolaris.egg-info/dependency_links.txt
+trisolaris.egg-info/requires.txt
+trisolaris.egg-info/top_level.txt

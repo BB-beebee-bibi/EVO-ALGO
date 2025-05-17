@@ -52,6 +52,49 @@ class CodeGenome:
         else:
             # Create a minimal random function if nothing is provided
             self._create_random_genome()
+        
+        # Initialize fitness-related attributes
+        self.fitness = 0.0
+        self.fitness_history = []
+        self.evaluation_count = 0
+    
+    def set_fitness(self, fitness: float) -> None:
+        """
+        Set the fitness value for this genome.
+        
+        Args:
+            fitness: The fitness value to set
+        """
+        self.fitness = fitness
+        self.fitness_history.append(fitness)
+        self.evaluation_count += 1
+    
+    def get_fitness(self) -> float:
+        """
+        Get the current fitness value.
+        
+        Returns:
+            The current fitness value
+        """
+        return self.fitness
+    
+    def get_fitness_history(self) -> List[float]:
+        """
+        Get the history of fitness values.
+        
+        Returns:
+            List of fitness values in chronological order
+        """
+        return self.fitness_history
+    
+    def get_evaluation_count(self) -> int:
+        """
+        Get the number of times this genome has been evaluated.
+        
+        Returns:
+            Number of evaluations
+        """
+        return self.evaluation_count
     
     def _create_random_genome(self):
         """Create a simple random function as a starting point."""
@@ -199,9 +242,7 @@ class CodeGenome:
         # Apply AST-based mutations
         mutator = AstMutator(rate)
         self.ast_tree = mutator.mutate(self.ast_tree)
-        
-        # The source code is now outdated
-        self._source_code = None
+        self._source_code = None  # Force regeneration of source code
         
         # Validate and repair the code after mutation
         self._validate_and_repair_code()
