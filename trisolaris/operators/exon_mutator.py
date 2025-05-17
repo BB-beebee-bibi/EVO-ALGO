@@ -8,63 +8,72 @@ granularity levels, from function-level to fine-grained AST node mutations.
 import ast
 import random
 import copy
-from typing import List, Dict, Any, Optional, Tuple
+import logging
+from typing import List, Dict, Any, Optional, Tuple, Set
 import astor
 from ..utils.ast_utils import (
     get_function_nodes, get_block_nodes, get_statement_nodes,
     get_node_parent_map, get_node_children_map, are_nodes_compatible,
     get_node_dependencies, get_node_definitions
 )
+from .code_validator import CodeValidator
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class ExonMutator:
     """Implements exon-like mutation operations on Python ASTs."""
     
     def __init__(self, granularity_weights: Optional[Dict[str, float]] = None):
         """
-        Initialize with configurable weights for different mutation granularities.
+        Initialize with configurable mutation granularity weights.
         
         Args:
             granularity_weights: Dictionary mapping granularity levels to probabilities.
-                Default: {'function': 0.5, 'block': 0.3, 'statement': 0.15, 'node': 0.05}
+                Default: {'function': 0.4, 'block': 0.3, 'statement': 0.2, 'node': 0.1}
         """
         self.granularity_weights = granularity_weights or {
-            'function': 0.5,  # Function-level mutations
-            'block': 0.3,     # Block-level mutations (if/else, loops)
-            'statement': 0.15, # Statement-level mutations
-            'node': 0.05      # Fine-grained AST node mutations
+            'function': 0.4,  # Function-level mutations
+            'block': 0.3,     # Block-level mutations
+            'statement': 0.2, # Statement-level mutations
+            'node': 0.1       # Node-level mutations
         }
         
         # Initialize mutation operators
         self.mutation_operators = {
             'function': [
-                self.replace_function,
-                self.reverse_function,
-                self.chain_functions
+                self.merge_functions,
+                self.split_function,
+                self.reverse_function_operations
             ],
             'block': [
-                self.transpose_block,
-                self.duplicate_block
+                self.merge_blocks,
+                self.split_block,
+                self.insert_statement,
+                self.remove_statement
             ],
             'statement': [
-                self.replace_statement,
-                self.swap_statements
+                self.swap_statements,
+                self.duplicate_statement,
+                self.remove_statement
             ],
             'node': [
-                self.mutate_node
+                self.mutate_constant,
+                self.swap_nodes,
+                self.insert_node
             ]
         }
-    
-    def select_granularity(self) -> str:
-        """Select mutation granularity based on configured weights."""
-        return random.choices(
-            list(self.granularity_weights.keys()),
-            weights=list(self.granularity_weights.values()),
-            k=1
-        )[0]
+        
+        # Initialize repair strategies
+        self.repair_strategies = {
+            'syntax': self._repair_syntax,
+            'semantic': self._repair_semantic,
+            'structural': self._repair_structure
+        }
     
     def mutate(self, code_ast: ast.AST) -> ast.AST:
         """
-        Apply a randomly selected mutation at an appropriate granularity.
+        Apply a random mutation to the AST.
         
         Args:
             code_ast: The AST to mutate
@@ -72,37 +81,198 @@ class ExonMutator:
         Returns:
             A new AST with the mutation applied
         """
-        granularity = self.select_granularity()
-        mutation_op = random.choice(self.mutation_operators[granularity])
-        return mutation_op(code_ast)
+        # Select mutation granularity
+        granularity = self._select_granularity()
+        
+        # Select mutation operator
+        operator = random.choice(self.mutation_operators[granularity])
+        
+        # Apply mutation
+        try:
+            mutated_ast = operator(code_ast)
+            
+            # Validate and repair if necessary
+            validator = CodeValidator()
+            if not validator.is_valid_syntax(mutated_ast):
+                mutated_ast = self._repair_ast(mutated_ast)
+            
+            return mutated_ast
+        except Exception as e:
+            logger.error(f"Mutation failed: {str(e)}")
+            return code_ast
     
-    def replace_function(self, code_ast: ast.AST) -> ast.AST:
+    def _select_granularity(self) -> str:
+        """Select mutation granularity based on weights."""
+        granularities = list(self.granularity_weights.keys())
+        weights = list(self.granularity_weights.values())
+        return random.choices(granularities, weights=weights)[0]
+    
+    def mutate_constant(self, code_ast: ast.AST) -> ast.AST:
+        """Mutate a constant value in the AST."""
+        for node in ast.walk(code_ast):
+            if isinstance(node, ast.Constant):
+                if isinstance(node.value, (int, float)):
+                    # Mutate numeric constant
+                    node.value = node.value + random.choice([-1, 1])
+                elif isinstance(node.value, str):
+                    # Mutate string constant
+                    if len(node.value) > 0:
+                        if random.random() < 0.5:
+                            # Add character
+                            node.value += random.choice('abcdefghijklmnopqrstuvwxyz')
+                        else:
+                            # Remove character
+                            node.value = node.value[:-1]
+                elif isinstance(node.value, bool):
+                    # Toggle boolean
+                    node.value = not node.value
+                break
+        return code_ast
+    
+    def _repair_ast(self, code_ast: ast.AST) -> ast.AST:
+        """Attempt to repair an invalid AST."""
+        for strategy in self.repair_strategies.values():
+            try:
+                repaired_ast = strategy(code_ast)
+                if CodeValidator().is_valid_syntax(repaired_ast):
+                    return repaired_ast
+            except:
+                continue
+        return code_ast
+    
+    def _repair_syntax(self, code_ast: ast.AST) -> ast.AST:
+        """Repair syntax-level issues."""
+        # Create a default valid AST if the current one is invalid
+        if not isinstance(code_ast, ast.Module):
+            return ast.Module(body=[], type_ignores=[])
+        
+        # Ensure all nodes have proper parent references
+        for node in ast.walk(code_ast):
+            for child in ast.iter_child_nodes(node):
+                if not hasattr(child, 'parent'):
+                    child.parent = node
+        
+        return code_ast
+    
+    def _repair_semantic(self, code_ast: ast.AST) -> ast.AST:
+        """Repair semantic-level issues."""
+        # Find undefined variables
+        undefined_vars = self._find_undefined_variables(code_ast)
+        
+        # Add variable definitions
+        for var in undefined_vars:
+            # Create assignment node
+            assign = ast.Assign(
+                targets=[ast.Name(id=var, ctx=ast.Store())],
+                value=ast.Constant(value=None)
+            )
+            # Add to module body
+            if isinstance(code_ast, ast.Module):
+                code_ast.body.insert(0, assign)
+        
+        return code_ast
+    
+    def _repair_structure(self, code_ast: ast.AST) -> ast.AST:
+        """Repair structural-level issues."""
+        # Ensure function definitions have proper structure
+        for node in ast.walk(code_ast):
+            if isinstance(node, ast.FunctionDef):
+                if not node.body:
+                    node.body = [ast.Pass()]
+                if not node.args.args:
+                    node.args.args = [ast.arg(arg='self', annotation=None)]
+        
+        return code_ast
+    
+    def _find_undefined_variables(self, code_ast: ast.AST) -> Set[str]:
+        """Find undefined variables in the AST."""
+        defined_vars = set()
+        used_vars = set()
+        
+        for node in ast.walk(code_ast):
+            if isinstance(node, ast.Name):
+                if isinstance(node.ctx, ast.Store):
+                    defined_vars.add(node.id)
+                elif isinstance(node.ctx, ast.Load):
+                    used_vars.add(node.id)
+        
+        return used_vars - defined_vars
+    
+    def merge_functions(self, code_ast: ast.AST) -> ast.AST:
+        """Merge two compatible functions into one."""
+        functions = get_function_nodes(code_ast)
+        if len(functions) < 2:
+            return code_ast
+            
+        # Select two random functions
+        func1, func2 = random.sample(functions, 2)
+        
+        # Check if functions are compatible
+        if not are_nodes_compatible(func1, func2):
+            return code_ast
+            
+        # Merge function bodies
+        merged_body = func1.body + func2.body
+        
+        # Create new function
+        new_func = ast.FunctionDef(
+            name=f"merged_{func1.name}_{func2.name}",
+            args=func1.args,
+            body=merged_body,
+            decorator_list=[],
+            returns=None
+        )
+        
+        # Replace one function with the merged one
+        func1.body = [new_func]
+        
+        return code_ast
+    
+    def split_function(self, code_ast: ast.AST) -> ast.AST:
         """
-        Replace a function body with another compatible function body.
+        Split a function into two parts.
         
         Args:
             code_ast: The AST containing functions to mutate
             
         Returns:
-            A new AST with a function body replaced
+            A new AST with a function split into two parts
         """
         functions = get_function_nodes(code_ast)
         if not functions:
             return code_ast
             
-        # Select a random function to replace
+        # Select a random function
         target_func = random.choice(functions)
         
-        # Create a new function body with compatible signature
-        new_body = self._generate_compatible_function_body(target_func)
+        # Only split if function has enough statements
+        if len(target_func.body) < 2:
+            return code_ast
+            
+        # Split point
+        split_idx = random.randint(1, len(target_func.body) - 1)
         
-        # Replace the function body
-        target_func.body = new_body
+        # Create new function for second part
+        new_func = ast.FunctionDef(
+            name=f"{target_func.name}_part2",
+            args=target_func.args,
+            body=target_func.body[split_idx:],
+            decorator_list=[],
+            returns=None
+        )
+        
+        # Update original function
+        target_func.body = target_func.body[:split_idx]
+        
+        # Add new function to module
+        if isinstance(code_ast, ast.Module):
+            code_ast.body.append(new_func)
+        
         return code_ast
     
-    def reverse_function(self, code_ast: ast.AST) -> ast.AST:
+    def reverse_function_operations(self, code_ast: ast.AST) -> ast.AST:
         """
-        Create an inverse operation of a selected function.
+        Reverse the operations in a function.
         
         Args:
             code_ast: The AST containing functions to mutate
@@ -114,113 +284,155 @@ class ExonMutator:
         if not functions:
             return code_ast
             
+        # Select a random function
         target_func = random.choice(functions)
         
         # Reverse the operations in the function body
-        reversed_body = self._reverse_function_operations(target_func.body)
+        reversed_body = []
+        for node in reversed(target_func.body):
+            if isinstance(node, ast.If):
+                # Reverse the condition
+                node.test = ast.UnaryOp(op=ast.Not(), operand=node.test)
+                # Swap if and else bodies
+                node.body, node.orelse = node.orelse, node.body
+            reversed_body.append(node)
+        
         target_func.body = reversed_body
-        
         return code_ast
     
-    def chain_functions(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Chain two compatible functions in sequence.
-        
-        Args:
-            code_ast: The AST containing functions to mutate
-            
-        Returns:
-            A new AST with functions chained together
-        """
-        functions = get_function_nodes(code_ast)
-        if len(functions) < 2:
-            return code_ast
-            
-        # Select two random functions to chain
-        func1, func2 = random.sample(functions, 2)
-        
-        # Create a new function that chains the two functions
-        chained_func = self._create_chained_function(func1, func2)
-        
-        # Add the new function to the AST
-        if isinstance(code_ast, ast.Module):
-            code_ast.body.append(chained_func)
-        
-        return code_ast
-    
-    def transpose_block(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Move a logical block to another compatible location.
-        
-        Args:
-            code_ast: The AST containing blocks to mutate
-            
-        Returns:
-            A new AST with a block transposed
-        """
+    def split_block(self, code_ast: ast.AST) -> ast.AST:
+        """Split a block into two parts."""
         blocks = get_block_nodes(code_ast)
         if not blocks:
             return code_ast
             
-        # Select a random block to transpose
-        target_block = random.choice(blocks)
+        # Select a random block
+        block = random.choice(blocks)
         
-        # Find a compatible location to move the block
-        new_location = self._find_compatible_location(code_ast, target_block)
-        if new_location:
-            self._move_block(target_block, new_location)
+        # Only split if block has enough statements
+        if len(block.body) < 2:
+            return code_ast
+            
+        # Split point
+        split_idx = random.randint(1, len(block.body) - 1)
+        
+        # Create new block
+        new_block = ast.If(
+            test=ast.Constant(value=True),
+            body=block.body[split_idx:],
+            orelse=[]
+        )
+        
+        # Update original block
+        block.body = block.body[:split_idx] + [new_block]
         
         return code_ast
     
-    def duplicate_block(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Duplicate a logical block with potential modifications.
-        
-        Args:
-            code_ast: The AST containing blocks to mutate
+    def merge_blocks(self, code_ast: ast.AST) -> ast.AST:
+        """Merge two adjacent blocks."""
+        blocks = get_block_nodes(code_ast)
+        if len(blocks) < 2:
+            return code_ast
             
-        Returns:
-            A new AST with a block duplicated
-        """
+        # Find adjacent blocks
+        for i in range(len(blocks) - 1):
+            block1, block2 = blocks[i], blocks[i + 1]
+            
+            # Check if blocks are compatible
+            if are_nodes_compatible(block1, block2):
+                # Merge block bodies
+                block1.body.extend(block2.body)
+                
+                # Remove second block
+                if isinstance(block1.parent, ast.Module):
+                    block1.parent.body.remove(block2)
+                elif isinstance(block1.parent, ast.FunctionDef):
+                    block1.parent.body.remove(block2)
+                
+                return code_ast
+        
+        return code_ast
+    
+    def insert_statement(self, code_ast: ast.AST) -> ast.AST:
+        """Insert a new statement into a block."""
         blocks = get_block_nodes(code_ast)
         if not blocks:
             return code_ast
             
-        # Select a random block to duplicate
-        target_block = random.choice(blocks)
+        # Select a random block
+        block = random.choice(blocks)
         
-        # Create a modified copy of the block
-        duplicate = self._create_modified_block_copy(target_block)
+        # Create a simple statement
+        new_stmt = ast.Assign(
+            targets=[ast.Name(id='temp', ctx=ast.Store())],
+            value=ast.Constant(value=0)
+        )
         
-        # Insert the duplicate at a compatible location
-        new_location = self._find_compatible_location(code_ast, duplicate)
-        if new_location:
-            self._insert_block(duplicate, new_location)
+        # Insert at random position
+        insert_idx = random.randint(0, len(block.body))
+        block.body.insert(insert_idx, new_stmt)
         
         return code_ast
     
-    def replace_statement(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Replace a statement with a compatible alternative.
-        
-        Args:
-            code_ast: The AST containing statements to mutate
-            
-        Returns:
-            A new AST with a statement replaced
-        """
-        statements = get_statement_nodes(code_ast)
-        if not statements:
+    def remove_statement(self, code_ast: ast.AST) -> ast.AST:
+        """Remove a statement from a block."""
+        blocks = get_block_nodes(code_ast)
+        if not blocks:
             return code_ast
             
-        # Select a random statement to replace
-        target_stmt = random.choice(statements)
+        # Select a random block
+        block = random.choice(blocks)
         
-        # Generate a compatible replacement statement
-        new_stmt = self._generate_compatible_statement(target_stmt)
+        # Only remove if block has statements
+        if not block.body:
+            return code_ast
+            
+        # Remove random statement
+        remove_idx = random.randint(0, len(block.body) - 1)
+        block.body.pop(remove_idx)
         
-        # Replace the statement
-        self._replace_node(target_stmt, new_stmt)
+        return code_ast
+    
+    def swap_nodes(self, code_ast: ast.AST) -> ast.AST:
+        """Swap two compatible nodes."""
+        nodes = list(ast.walk(code_ast))
+        if len(nodes) < 2:
+            return code_ast
+            
+        # Select two random nodes
+        node1, node2 = random.sample(nodes, 2)
+        
+        # Check if nodes are compatible
+        if not are_nodes_compatible(node1, node2):
+            return code_ast
+            
+        # Swap node values
+        if isinstance(node1, ast.Num) and isinstance(node2, ast.Num):
+            node1.n, node2.n = node2.n, node1.n
+        elif isinstance(node1, ast.Str) and isinstance(node2, ast.Str):
+            node1.s, node2.s = node2.s, node1.s
+        elif isinstance(node1, ast.Name) and isinstance(node2, ast.Name):
+            node1.id, node2.id = node2.id, node1.id
+        
+        return code_ast
+    
+    def insert_node(self, code_ast: ast.AST) -> ast.AST:
+        """Insert a new node into the AST."""
+        nodes = list(ast.walk(code_ast))
+        if not nodes:
+            return code_ast
+            
+        # Select a random node
+        target = random.choice(nodes)
+        
+        # Create a simple node
+        new_node = ast.Constant(value=0)
+        
+        # Insert as child of target
+        if isinstance(target, ast.BinOp):
+            target.right = new_node
+        elif isinstance(target, ast.Compare):
+            target.comparators.append(new_node)
         
         return code_ast
     
@@ -247,158 +459,6 @@ class ExonMutator:
         
         return code_ast
     
-    def mutate_node(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Apply fine-grained mutation to an AST node.
-        
-        Args:
-            code_ast: The AST containing nodes to mutate
-            
-        Returns:
-            A new AST with a node mutated
-        """
-        # Get all nodes in the AST
-        nodes = list(ast.walk(code_ast))
-        if not nodes:
-            return code_ast
-            
-        # Select a random node to mutate
-        target_node = random.choice(nodes)
-        
-        # Apply mutation based on node type
-        if isinstance(target_node, ast.Num):
-            target_node.n += random.randint(-10, 10)
-        elif isinstance(target_node, ast.Str):
-            target_node.s = target_node.s[::-1]  # Reverse string
-        elif isinstance(target_node, ast.Name):
-            target_node.id = f"var_{random.randint(0, 1000)}"
-        
-        return code_ast
-    
-    # Helper methods for mutation operations
-    def _generate_compatible_function_body(self, target_func: ast.FunctionDef) -> List[ast.AST]:
-        """Generate a new function body compatible with the target function's signature."""
-        # Create a simple function body that returns a default value
-        return [
-            ast.Return(value=ast.Constant(value=None))
-        ]
-    
-    def _reverse_function_operations(self, body: List[ast.AST]) -> List[ast.AST]:
-        """Reverse the operations in a function body."""
-        reversed_body = []
-        for node in reversed(body):
-            if isinstance(node, ast.If):
-                # Reverse the condition
-                node.test = ast.UnaryOp(op=ast.Not(), operand=node.test)
-                # Swap if and else bodies
-                node.body, node.orelse = node.orelse, node.body
-            reversed_body.append(node)
-        return reversed_body
-    
-    def _create_chained_function(self, func1: ast.FunctionDef, func2: ast.FunctionDef) -> ast.FunctionDef:
-        """Create a new function that chains two functions together."""
-        # Create a new function with the same signature as func1
-        chained_func = ast.FunctionDef(
-            name=f"chained_{func1.name}_{func2.name}",
-            args=func1.args,
-            body=[],
-            decorator_list=[],
-            returns=None
-        )
-        
-        # Add function calls to the body
-        chained_func.body.extend([
-            ast.Assign(
-                targets=[ast.Name(id='result', ctx=ast.Store())],
-                value=ast.Call(
-                    func=ast.Name(id=func1.name, ctx=ast.Load()),
-                    args=[ast.Name(id='lst', ctx=ast.Load())],
-                    keywords=[]
-                )
-            ),
-            ast.Return(
-                value=ast.Call(
-                    func=ast.Name(id=func2.name, ctx=ast.Load()),
-                    args=[ast.Name(id='result', ctx=ast.Load())],
-                    keywords=[]
-                )
-            )
-        ])
-        
-        return chained_func
-    
-    def _find_compatible_location(self, code_ast: ast.AST, block: ast.AST) -> Optional[ast.AST]:
-        """Find a compatible location to move or insert a block."""
-        # Get all potential locations (other blocks)
-        potential_locations = get_block_nodes(code_ast)
-        if not potential_locations:
-            return None
-            
-        # Filter for compatible locations
-        compatible_locations = [
-            loc for loc in potential_locations
-            if are_nodes_compatible(block, loc)
-        ]
-        
-        return random.choice(compatible_locations) if compatible_locations else None
-    
-    def _move_block(self, block: ast.AST, new_location: ast.AST) -> None:
-        """Move a block to a new location."""
-        # Get parent maps
-        parent_map = get_node_parent_map(block)
-        new_parent = parent_map.get(new_location)
-        
-        if new_parent:
-            # Remove block from old location
-            if block in new_parent.body:
-                new_parent.body.remove(block)
-            
-            # Add block to new location
-            new_location.body.append(block)
-    
-    def _create_modified_block_copy(self, block: ast.AST) -> ast.AST:
-        """Create a modified copy of a block."""
-        # Create a deep copy of the block
-        duplicate = copy.deepcopy(block)
-        
-        # Modify the duplicate
-        if isinstance(duplicate, ast.If):
-            # Reverse the condition
-            duplicate.test = ast.UnaryOp(op=ast.Not(), operand=duplicate.test)
-        elif isinstance(duplicate, (ast.For, ast.While)):
-            # Modify the loop variable
-            if isinstance(duplicate.target, ast.Name):
-                duplicate.target.id = f"i_{random.randint(0, 1000)}"
-        
-        return duplicate
-    
-    def _insert_block(self, block: ast.AST, location: ast.AST) -> None:
-        """Insert a block at a specific location."""
-        if hasattr(location, 'body'):
-            location.body.append(block)
-    
-    def _generate_compatible_statement(self, target_stmt: ast.AST) -> ast.AST:
-        """Generate a compatible replacement statement."""
-        if isinstance(target_stmt, ast.Return):
-            return ast.Return(value=ast.Constant(value=None))
-        elif isinstance(target_stmt, ast.Assign):
-            return ast.Assign(
-                targets=[ast.Name(id=f"var_{random.randint(0, 1000)}", ctx=ast.Store())],
-                value=ast.Constant(value=None)
-            )
-        elif isinstance(target_stmt, ast.Expr):
-            return ast.Expr(value=ast.Constant(value=None))
-        return target_stmt
-    
-    def _replace_node(self, old_node: ast.AST, new_node: ast.AST) -> None:
-        """Replace a node in the AST."""
-        parent_map = get_node_parent_map(old_node)
-        parent = parent_map.get(old_node)
-        
-        if parent and hasattr(parent, 'body'):
-            idx = parent.body.index(old_node)
-            parent.body[idx] = new_node
-    
     def _are_statements_compatible(self, stmt1: ast.AST, stmt2: ast.AST) -> bool:
         """Check if two statements are compatible for swapping."""
         return are_nodes_compatible(stmt1, stmt2)
@@ -413,4 +473,30 @@ class ExonMutator:
             idx1 = parent1.body.index(node1)
             idx2 = parent2.body.index(node2)
             
-            parent1.body[idx1], parent2.body[idx2] = parent2.body[idx2], parent1.body[idx1] 
+            parent1.body[idx1], parent2.body[idx2] = parent2.body[idx2], parent1.body[idx1]
+    
+    def duplicate_statement(self, code_ast: ast.AST) -> ast.AST:
+        """
+        Duplicate a random statement in a block.
+        
+        Args:
+            code_ast: The AST containing statements to mutate
+            
+        Returns:
+            A new AST with a statement duplicated
+        """
+        blocks = get_block_nodes(code_ast)
+        if not blocks:
+            return code_ast
+        
+        # Select a random block
+        block = random.choice(blocks)
+        if not block.body:
+            return code_ast
+        
+        # Select a random statement to duplicate
+        stmt = random.choice(block.body)
+        # Insert a copy of the statement at a random position
+        insert_idx = random.randint(0, len(block.body))
+        block.body.insert(insert_idx, copy.deepcopy(stmt))
+        return code_ast 

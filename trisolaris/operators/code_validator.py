@@ -1,212 +1,244 @@
 """
-Code validation and repair utilities for TRISOLARIS.
+Code validation and repair for TRISOLARIS.
 
-This module provides functionality for validating and repairing Python code after mutation,
-ensuring syntactic correctness and maintaining code quality.
+This module provides utilities to validate and repair Python code during the
+evolutionary process, ensuring that genetic operations produce valid code.
 """
 
 import ast
 import astor
-from typing import List, Optional, Tuple, Dict, Any
-from ..utils.ast_utils import get_function_nodes, get_block_nodes, get_statement_nodes
+import logging
+from typing import Tuple, Optional, Dict, Any, List
+from ..utils.ast_utils import (
+    get_function_nodes, get_block_nodes, get_statement_nodes,
+    are_nodes_compatible, get_node_dependencies, get_node_definitions
+)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class CodeValidator:
-    """Validates and repairs Python code after mutation."""
+    """Validates and repairs Python code."""
     
     def __init__(self, repair_strategies: Optional[Dict[str, float]] = None):
         """
-        Initialize with configurable repair strategies.
+        Initialize with configurable repair strategy weights.
         
         Args:
-            repair_strategies: Dictionary mapping repair strategy names to probabilities.
-                Default: {
-                    'fix_returns': 0.3,
-                    'balance_delimiters': 0.2,
-                    'complete_structures': 0.2,
-                    'fix_indentation': 0.15,
-                    'add_imports': 0.15
-                }
+            repair_strategies: Dictionary mapping repair strategies to probabilities.
+                Default: {'syntax': 0.4, 'semantic': 0.3, 'structural': 0.3}
         """
         self.repair_strategies = repair_strategies or {
-            'fix_returns': 0.3,
-            'balance_delimiters': 0.2,
-            'complete_structures': 0.2,
-            'fix_indentation': 0.15,
-            'add_imports': 0.15
+            'syntax': 0.4,    # Syntax-level repairs
+            'semantic': 0.3,  # Semantic-level repairs
+            'structural': 0.3 # Structural-level repairs
         }
     
-    @staticmethod
-    def is_valid_syntax(code_ast: ast.AST) -> bool:
+    def is_valid_syntax(self, code_ast: ast.AST) -> bool:
         """
-        Check if the AST represents syntactically valid Python code.
+        Check if the AST represents valid Python syntax.
         
         Args:
             code_ast: The AST to validate
             
         Returns:
-            True if the code is syntactically valid, False otherwise
+            True if the syntax is valid, False otherwise
         """
         try:
-            ast.fix_missing_locations(code_ast)
+            # Try to convert back to source code
             astor.to_source(code_ast)
             return True
-        except Exception:
+        except:
             return False
     
-    def attempt_repair(self, code_ast: ast.AST) -> Tuple[ast.AST, bool]:
+    def is_valid_semantic(self, code_ast: ast.AST) -> bool:
         """
-        Attempt to repair common syntax issues in the AST.
+        Check if the AST represents semantically valid code.
+        
+        Args:
+            code_ast: The AST to validate
+            
+        Returns:
+            True if the semantics are valid, False otherwise
+        """
+        try:
+            # Check for undefined variables
+            undefined = self._find_undefined_variables(code_ast)
+            if undefined:
+                return False
+            
+            # Check for invalid operations
+            invalid_ops = self._find_invalid_operations(code_ast)
+            if invalid_ops:
+                return False
+            
+            return True
+        except:
+            return False
+    
+    def is_valid_structure(self, code_ast: ast.AST) -> bool:
+        """
+        Check if the AST has a valid structure.
+        
+        Args:
+            code_ast: The AST to validate
+            
+        Returns:
+            True if the structure is valid, False otherwise
+        """
+        try:
+            # Check module structure
+            if not isinstance(code_ast, ast.Module):
+                return False
+            
+            # Check function structure
+            for node in ast.walk(code_ast):
+                if isinstance(node, ast.FunctionDef):
+                    if not node.body:
+                        return False
+                    if not isinstance(node.body[0], ast.Expr):
+                        return False
+            
+            return True
+        except:
+            return False
+    
+    def repair(self, code_ast: ast.AST) -> ast.AST:
+        """
+        Attempt to repair an invalid AST.
         
         Args:
             code_ast: The AST to repair
             
         Returns:
-            Tuple of (repaired AST, success flag)
+            A repaired AST if possible, otherwise the original AST
         """
-        if self.is_valid_syntax(code_ast):
-            return code_ast, True
-            
-        # Apply repair strategies in order of probability
-        strategies = sorted(
-            self.repair_strategies.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-        
-        for strategy_name, _ in strategies:
-            repair_method = getattr(self, f'_repair_{strategy_name}', None)
-            if repair_method:
-                repaired_ast = repair_method(code_ast)
+        # Try each repair strategy in order
+        for strategy in self.repair_strategies.values():
+            try:
+                repaired_ast = strategy(code_ast)
                 if self.is_valid_syntax(repaired_ast):
-                    return repaired_ast, True
-        
-        return code_ast, False
-    
-    def _repair_fix_returns(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Fix missing return statements in functions.
-        
-        Args:
-            code_ast: The AST to repair
-            
-        Returns:
-            Repaired AST
-        """
-        for func in get_function_nodes(code_ast):
-            if not self._has_return_statement(func.body):
-                # Add a default return statement
-                func.body.append(ast.Return(value=ast.Constant(value=None)))
+                    return repaired_ast
+            except Exception as e:
+                logger.error(f"Repair strategy failed: {e}")
+                continue
         return code_ast
     
-    def _repair_balance_delimiters(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Balance parentheses, brackets, and braces in the code.
-        
-        Args:
-            code_ast: The AST to repair
-            
-        Returns:
-            Repaired AST
-        """
-        # Implementation of delimiter balancing
-        return code_ast
+    def _create_default_ast(self) -> ast.AST:
+        """Create a default valid AST."""
+        return ast.Module(
+            body=[
+                ast.FunctionDef(
+                    name='default_function',
+                    args=ast.arguments(
+                        posonlyargs=[],
+                        args=[],
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        defaults=[]
+                    ),
+                    body=[ast.Return(value=ast.Constant(value=None))],
+                    decorator_list=[],
+                    returns=None
+                )
+            ],
+            type_ignores=[]
+        )
     
-    def _repair_complete_structures(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Complete incomplete if/else, try/except, and other control structures.
+    def _repair_syntax(self, code_ast: ast.AST) -> ast.AST:
+        """Repair syntax-level issues."""
+        # Fix missing locations
+        ast.fix_missing_locations(code_ast)
         
-        Args:
-            code_ast: The AST to repair
-            
-        Returns:
-            Repaired AST
-        """
+        # Ensure all nodes have proper parent references
         for node in ast.walk(code_ast):
-            if isinstance(node, ast.If) and not node.orelse:
-                node.orelse = []
-            elif isinstance(node, ast.Try) and not node.orelse:
-                node.orelse = []
-            elif isinstance(node, ast.Try) and not node.finalbody:
-                node.finalbody = []
+            if not hasattr(node, 'parent'):
+                node.parent = None
+        
         return code_ast
     
-    def _repair_fix_indentation(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Fix indentation issues in the code.
+    def _repair_semantic(self, code_ast: ast.AST) -> ast.AST:
+        """Repair semantic-level issues."""
+        # Fix undefined variables
+        undefined = self._find_undefined_variables(code_ast)
+        for var in undefined:
+            self._add_variable_definition(code_ast, var)
         
-        Args:
-            code_ast: The AST to repair
-            
-        Returns:
-            Repaired AST
-        """
-        # Implementation of indentation fixing
+        # Fix invalid operations
+        invalid_ops = self._find_invalid_operations(code_ast)
+        for op in invalid_ops:
+            self._fix_invalid_operation(code_ast, op)
+        
         return code_ast
     
-    def _repair_add_imports(self, code_ast: ast.AST) -> ast.AST:
-        """
-        Add missing imports based on used symbols.
-        
-        Args:
-            code_ast: The AST to repair
-            
-        Returns:
-            Repaired AST
-        """
+    def _repair_structural(self, code_ast: ast.AST) -> ast.AST:
+        """Repair structural issues."""
+        # Ensure module has proper structure
         if not isinstance(code_ast, ast.Module):
-            return code_ast
-            
-        # Collect used symbols
-        used_symbols = self._collect_used_symbols(code_ast)
+            code_ast = ast.Module(body=[code_ast], type_ignores=[])
         
-        # Add missing imports
-        for symbol in used_symbols:
-            if not self._has_import_for_symbol(code_ast, symbol):
-                import_stmt = self._create_import_statement(symbol)
-                code_ast.body.insert(0, import_stmt)
+        # Ensure all blocks have proper indentation
+        for node in ast.walk(code_ast):
+            if isinstance(node, (ast.If, ast.For, ast.While, ast.FunctionDef)):
+                if not node.body:
+                    node.body = [ast.Pass()]
+                if hasattr(node, 'orelse') and not node.orelse:
+                    node.orelse = []
         
         return code_ast
     
-    def _has_return_statement(self, body: List[ast.AST]) -> bool:
-        """Check if a function body has a return statement."""
-        for node in body:
-            if isinstance(node, ast.Return):
-                return True
-            elif isinstance(node, (ast.If, ast.Try)):
-                if self._has_return_statement(node.body) or self._has_return_statement(node.orelse):
-                    return True
-        return False
-    
-    def _collect_used_symbols(self, code_ast: ast.AST) -> List[str]:
-        """Collect all symbols used in the code."""
-        symbols = set()
+    def _find_undefined_variables(self, code_ast: ast.AST) -> List[str]:
+        """Find undefined variables in the AST."""
+        undefined = set()
+        defined = set()
+        
         for node in ast.walk(code_ast):
             if isinstance(node, ast.Name):
-                symbols.add(node.id)
-        return list(symbols)
+                if isinstance(node.ctx, ast.Store):
+                    defined.add(node.id)
+                elif isinstance(node.ctx, ast.Load):
+                    if node.id not in defined:
+                        undefined.add(node.id)
+        
+        return list(undefined)
     
-    def _has_import_for_symbol(self, code_ast: ast.AST, symbol: str) -> bool:
-        """Check if a symbol is already imported."""
-        for node in code_ast.body:
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                if isinstance(node, ast.Import):
-                    for name in node.names:
-                        if name.asname == symbol or name.name == symbol:
-                            return True
-                else:  # ImportFrom
-                    for name in node.names:
-                        if name.asname == symbol or name.name == symbol:
-                            return True
-        return False
+    def _find_invalid_operations(self, code_ast: ast.AST) -> List[ast.AST]:
+        """Find invalid operations in the AST."""
+        invalid = []
+        
+        for node in ast.walk(code_ast):
+            if isinstance(node, ast.BinOp):
+                # Check for invalid arithmetic operations
+                if isinstance(node.op, (ast.Div, ast.FloorDiv, ast.Mod)):
+                    if isinstance(node.right, ast.Constant) and node.right.value == 0:
+                        invalid.append(node)
+            elif isinstance(node, ast.Compare):
+                # Check for invalid comparisons
+                if len(node.comparators) == 0:
+                    invalid.append(node)
+        
+        return invalid
     
-    def _create_import_statement(self, symbol: str) -> ast.Import:
-        """Create an import statement for a symbol."""
-        return ast.Import(names=[ast.alias(name=symbol, asname=None)])
+    def _add_variable_definition(self, code_ast: ast.AST, var_name: str) -> None:
+        """Add a variable definition to the AST."""
+        # Find the first function definition
+        for node in ast.walk(code_ast):
+            if isinstance(node, ast.FunctionDef):
+                # Add variable definition at the start of the function
+                node.body.insert(0, ast.Assign(
+                    targets=[ast.Name(id=var_name, ctx=ast.Store())],
+                    value=ast.Constant(value=None)
+                ))
+                break
     
-    def repair(self, code_ast):
-        """Stub repair method: returns the input AST or a minimal valid AST if input is None."""
-        if code_ast is not None:
-            return code_ast
-        # Return a minimal valid AST
-        import ast
-        return ast.parse("def repaired():\n    return 0\n") 
+    def _fix_invalid_operation(self, code_ast: ast.AST, op_node: ast.AST) -> None:
+        """Fix an invalid operation in the AST."""
+        if isinstance(op_node, ast.BinOp):
+            # Replace division by zero with a safe value
+            if isinstance(op_node.op, (ast.Div, ast.FloorDiv, ast.Mod)):
+                op_node.right = ast.Constant(value=1)
+        elif isinstance(op_node, ast.Compare):
+            # Add a default comparator
+            if len(op_node.comparators) == 0:
+                op_node.comparators = [ast.Constant(value=0)] 
