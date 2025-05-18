@@ -10,4 +10,5 @@ pytest-cov>=3.0.0  # For test coverage
 pytest-benchmark>=3.4.0  # For performance testing
 astor>=0.8.1
 pandas>=1.4.0
-scikit-learn>=1.0.0 
+scikit-learn>=1.0.0
+backoff==2.2.1  # For retry mechanism 

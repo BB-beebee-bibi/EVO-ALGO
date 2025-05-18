@@ -1,23 +1,23 @@
 import ast
 import random
 import copy
-from typing import List, Any, Optional, Tuple, Set, Dict
+from typing import List, Any, Optional, Tuple, Set, Dict, Union
 import astor  # For converting AST back to source code
 from .ast_helpers import (
     get_all_nodes, get_leaf_nodes, get_subtrees,
     validate_ast, replace_subtree, clone_ast
 )
 import logging
+import hashlib
 
 logger = logging.getLogger(__name__)
 
 class ProgramAST:
     """
-    Represents a program as an AST for evolutionary operations.
+    Represents Python programs as ASTs for evolutionary operations.
     """
-    def __init__(self, ast_tree: Optional[ast.AST] = None):
-        self.ast_tree = ast_tree or self._generate_random_program()
-        # Initialize telemetry
+    def __init__(self, source: str = None, tree: ast.Module = None):
+        """Initialize from source code or an existing AST."""
         self.stats = {
             'mutation_attempts': 0,
             'mutation_effective': 0,
@@ -28,106 +28,36 @@ class ProgramAST:
             'crossover_parent2': 0,
             'crossover_validation_failures': 0
         }
+        
+        if source is not None:
+            self.tree = ast.parse(source)
+            ast.fix_missing_locations(self.tree)
+        elif tree is not None:
+            self.tree = copy.deepcopy(tree)
+            ast.fix_missing_locations(self.tree)
+        else:
+            # Create minimal valid program
+            self.tree = ast.parse("def main(): pass")
+            
+        # Initialize function mapping
+        self.ast_nodes = self._map_functions()
+        
         # Validate the AST
-        is_valid, error = validate_ast(self.ast_tree)
+        is_valid, error = validate_ast(self.tree)
         if not is_valid:
             raise ValueError(f"Invalid AST: {error}")
     
-    def _generate_random_program(self) -> ast.AST:
-        """Generate a random program AST for text file sorting."""
-        # Basic program structure
-        program = ast.Module(
-            body=[
-                # Import statements
-                ast.Import(names=[ast.alias(name='os', asname=None)]),
-                ast.Import(names=[ast.alias(name='re', asname=None)]),
-                
-                # Main function definition
-                ast.FunctionDef(
-                    name='sort_files',
-                    args=ast.arguments(
-                        posonlyargs=[],
-                        args=[ast.arg(arg='file_list', annotation=None)],
-                        kwonlyargs=[],
-                        kw_defaults=[],
-                        defaults=[]
-                    ),
-                    body=[
-                        # Initialize result dictionary
-                        ast.Assign(
-                            targets=[ast.Name(id='result', ctx=ast.Store())],
-                            value=ast.Dict(keys=[], values=[])
-                        ),
-                        
-                        # Process each file
-                        ast.For(
-                            target=ast.Name(id='filename', ctx=ast.Store()),
-                            iter=ast.Name(id='file_list', ctx=ast.Load()),
-                            body=[
-                                # Read file content
-                                ast.Assign(
-                                    targets=[ast.Name(id='content', ctx=ast.Store())],
-                                    value=ast.Call(
-                                        func=ast.Name(id='open', ctx=ast.Load()),
-                                        args=[
-                                            ast.Call(
-                                                func=ast.Attribute(
-                                                    value=ast.Name(id='os', ctx=ast.Load()),
-                                                    attr='path',
-                                                    ctx=ast.Load()
-                                                ),
-                                                args=[
-                                                    ast.Name(id='filename', ctx=ast.Load())
-                                                ],
-                                                keywords=[]
-                                            )
-                                        ],
-                                        keywords=[]
-                                    )
-                                ),
-                                
-                                # Add classification logic (placeholder)
-                                ast.Assign(
-                                    targets=[ast.Name(id='category', ctx=ast.Store())],
-                                    value=ast.Constant(value='unknown')
-                                ),
-                                
-                                # Store result
-                                ast.Expr(
-                                    value=ast.Call(
-                                        func=ast.Attribute(
-                                            value=ast.Name(id='result', ctx=ast.Load()),
-                                            attr='update',
-                                            ctx=ast.Load()
-                                        ),
-                                        args=[
-                                            ast.Dict(
-                                                keys=[ast.Constant(value='filename')],
-                                                values=[ast.Name(id='category', ctx=ast.Load())]
-                                            )
-                                        ],
-                                        keywords=[]
-                                    )
-                                )
-                            ],
-                            orelse=[]
-                        ),
-                        
-                        # Return result
-                        ast.Return(value=ast.Name(id='result', ctx=ast.Load()))
-                    ],
-                    decorator_list=[],
-                    returns=None
-                )
-            ],
-            type_ignores=[]
-        )
-        
-        return program
+    def _map_functions(self) -> Dict[str, ast.FunctionDef]:
+        """Create a mapping of function names to their AST nodes."""
+        functions = {}
+        for node in ast.walk(self.tree):
+            if isinstance(node, ast.FunctionDef):
+                functions[node.name] = node
+        return functions
     
     def to_source(self) -> str:
-        """Convert AST back to source code."""
-        return astor.to_source(self.ast_tree)
+        """Convert the AST back to source code."""
+        return astor.to_source(self.tree)
     
     def _generate_random_constant(self) -> ast.AST:
         """Generate a random constant value."""
@@ -279,7 +209,7 @@ class ProgramAST:
     def _attempt_macro_mutation(self) -> Optional[ast.AST]:
         """Attempt a more substantial mutation when normal mutations fail."""
         try:
-            all_nodes = get_all_nodes(self.ast_tree)
+            all_nodes = get_all_nodes(self.tree)
             if not all_nodes:
                 return None
             # Try to mutate import statements
@@ -288,7 +218,7 @@ class ProgramAST:
                     # Change the imported module name
                     for alias in node.names:
                         alias.name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
-                    return self.ast_tree
+                    return self.tree
             # Try to mutate function signature
             for node in all_nodes:
                 if isinstance(node, ast.FunctionDef):
@@ -297,7 +227,7 @@ class ProgramAST:
                     # Change argument names
                     for arg in node.args.args:
                         arg.arg = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
-                    return self.ast_tree
+                    return self.tree
             # As a last resort, generate a new random program
             return self._generate_random_program()
         except Exception as e:
@@ -310,17 +240,17 @@ class ProgramAST:
         
         if random.random() > mutation_rate:
             self.stats['mutation_noop'] += 1
-            return ProgramAST(ast_tree=ast.copy_location(
-                ast.fix_missing_locations(clone_ast(self.ast_tree)),
-                self.ast_tree
+            return ProgramAST(tree=ast.copy_location(
+                ast.fix_missing_locations(clone_ast(self.tree)),
+                self.tree
             ))
 
-        all_nodes = get_all_nodes(self.ast_tree)
+        all_nodes = get_all_nodes(self.tree)
         if not all_nodes:
             self.stats['mutation_noop'] += 1
             return self
 
-        original_hash = hash(ast.dump(self.ast_tree))
+        original_hash = hash(ast.dump(self.tree))
         mutated = None
         for attempt in range(max_retries):
             target_node = random.choice(all_nodes)
@@ -331,11 +261,11 @@ class ProgramAST:
                 mutated_node = self._subtree_mutate(target_node)
             else:
                 mutated_node = self._functional_mutate(target_node)
-            new_ast = replace_subtree(self.ast_tree, target_node, mutated_node)
+            new_ast = replace_subtree(self.tree, target_node, mutated_node)
             is_valid, error = validate_ast(new_ast)
             if is_valid:
-                mutated = ProgramAST(ast_tree=new_ast)
-                if hash(ast.dump(mutated.ast_tree)) != original_hash:
+                mutated = ProgramAST(tree=new_ast)
+                if hash(ast.dump(mutated.tree)) != original_hash:
                     self.stats['mutation_effective'] += 1
                     return mutated
             # On final attempt, try a more substantial mutation
@@ -344,15 +274,15 @@ class ProgramAST:
                 if new_ast is not None:
                     is_valid, error = validate_ast(new_ast)
                     if is_valid:
-                        mutated = ProgramAST(ast_tree=new_ast)
-                        if hash(ast.dump(mutated.ast_tree)) != original_hash:
+                        mutated = ProgramAST(tree=new_ast)
+                        if hash(ast.dump(mutated.tree)) != original_hash:
                             self.stats['mutation_effective'] += 1
                             return mutated
         # If all retries fail, return a clone of the original
         self.stats['mutation_noop'] += 1
-        return ProgramAST(ast_tree=ast.copy_location(
-            ast.fix_missing_locations(clone_ast(self.ast_tree)),
-            self.ast_tree
+        return ProgramAST(tree=ast.copy_location(
+            ast.fix_missing_locations(clone_ast(self.tree)),
+            self.tree
         ))
 
     @classmethod
@@ -372,8 +302,8 @@ class ProgramAST:
         parent2.stats['crossover_attempts'] += 1
         
         # Get compatible subtrees from both parents with location information
-        p1_subtrees = cls.get_compatible_subtrees(parent1.ast_tree)
-        p2_subtrees = cls.get_compatible_subtrees(parent2.ast_tree)
+        p1_subtrees = cls.get_compatible_subtrees(parent1.tree)
+        p2_subtrees = cls.get_compatible_subtrees(parent2.tree)
         
         # Log the number of compatible subtrees found
         logger.debug(f"Parent 1 compatible subtrees: {len(p1_subtrees)}")
@@ -384,7 +314,7 @@ class ProgramAST:
             logger.warning("No compatible subtrees found for crossover. Returning parent copies.")
             parent1.stats['crossover_parent1'] += 1
             parent2.stats['crossover_parent2'] += 1
-            return cls(ast_tree=copy.deepcopy(parent1.ast_tree)), cls(ast_tree=copy.deepcopy(parent2.ast_tree))
+            return cls(tree=copy.deepcopy(parent1.tree)), cls(tree=copy.deepcopy(parent2.tree))
         
         # Select random subtrees from each parent
         p1_subtree_info = random.choice(p1_subtrees)
@@ -398,8 +328,8 @@ class ProgramAST:
         logger.debug(f"Selected subtree from Parent 2: {ast.unparse(p2_subtree)}")
         
         # Create copies of parent ASTs
-        child1_ast = copy.deepcopy(parent1.ast_tree)
-        child2_ast = copy.deepcopy(parent2.ast_tree)
+        child1_ast = copy.deepcopy(parent1.tree)
+        child2_ast = copy.deepcopy(parent2.tree)
         
         # Replace subtrees using structural equality
         child1_ast = cls.replace_subtree(child1_ast, p1_subtree, p2_subtree)
@@ -417,15 +347,15 @@ class ProgramAST:
             logger.warning(f"Invalid offspring produced. Child 1 error: {error1}, Child 2 error: {error2}")
             parent1.stats['crossover_validation_failures'] += 1
             parent2.stats['crossover_validation_failures'] += 1
-            return cls(ast_tree=copy.deepcopy(parent1.ast_tree)), cls(ast_tree=copy.deepcopy(parent2.ast_tree))
+            return cls(tree=copy.deepcopy(parent1.tree)), cls(tree=copy.deepcopy(parent2.tree))
         
-        child1 = cls(ast_tree=child1_ast)
-        child2 = cls(ast_tree=child2_ast)
+        child1 = cls(tree=child1_ast)
+        child2 = cls(tree=child2_ast)
         
         # Track novel offspring
-        if ast.dump(child1.ast_tree) != ast.dump(parent1.ast_tree) and ast.dump(child1.ast_tree) != ast.dump(parent2.ast_tree):
+        if ast.dump(child1.tree) != ast.dump(parent1.tree) and ast.dump(child1.tree) != ast.dump(parent2.tree):
             parent1.stats['crossover_novel'] += 1
-        if ast.dump(child2.ast_tree) != ast.dump(parent1.ast_tree) and ast.dump(child2.ast_tree) != ast.dump(parent2.ast_tree):
+        if ast.dump(child2.tree) != ast.dump(parent1.tree) and ast.dump(child2.tree) != ast.dump(parent2.tree):
             parent2.stats['crossover_novel'] += 1
             
         return child1, child2
