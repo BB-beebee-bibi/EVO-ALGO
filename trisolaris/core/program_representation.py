@@ -9,6 +9,7 @@ from .ast_helpers import (
 )
 import logging
 import hashlib
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,11 @@ class ProgramAST:
             self.tree = copy.deepcopy(tree)
             ast.fix_missing_locations(self.tree)
         else:
-            # Create minimal valid program
-            self.tree = ast.parse("def main(): pass")
+            # Create minimal valid program with sort_files function
+            self.tree = ast.parse("""
+def sort_files(file_list):
+    return sorted(file_list)
+""")
             
         # Initialize function mapping
         self.ast_nodes = self._map_functions()
@@ -301,6 +305,14 @@ class ProgramAST:
         parent1.stats['crossover_attempts'] += 1
         parent2.stats['crossover_attempts'] += 1
         
+        # Enable debug mode if environment variable is set
+        debug_mode = os.environ.get('DEBUG_CROSSOVER', '').lower() == 'true'
+        
+        if debug_mode:
+            logger.info("Crossover debug mode enabled")
+            logger.info(f"Parent 1 AST:\n{ast.dump(parent1.tree, include_attributes=True)}")
+            logger.info(f"Parent 2 AST:\n{ast.dump(parent2.tree, include_attributes=True)}")
+        
         # Get compatible subtrees from both parents with location information
         p1_subtrees = cls.get_compatible_subtrees(parent1.tree)
         p2_subtrees = cls.get_compatible_subtrees(parent2.tree)
@@ -316,49 +328,107 @@ class ProgramAST:
             parent2.stats['crossover_parent2'] += 1
             return cls(tree=copy.deepcopy(parent1.tree)), cls(tree=copy.deepcopy(parent2.tree))
         
-        # Select random subtrees from each parent
-        p1_subtree_info = random.choice(p1_subtrees)
-        p2_subtree_info = random.choice(p2_subtrees)
-        
-        p1_subtree, p1_parent, p1_field, p1_index = p1_subtree_info
-        p2_subtree, p2_parent, p2_field, p2_index = p2_subtree_info
-        
-        # Log the selected subtrees
-        logger.debug(f"Selected subtree from Parent 1: {ast.unparse(p1_subtree)}")
-        logger.debug(f"Selected subtree from Parent 2: {ast.unparse(p2_subtree)}")
-        
-        # Create copies of parent ASTs
-        child1_ast = copy.deepcopy(parent1.tree)
-        child2_ast = copy.deepcopy(parent2.tree)
-        
-        # Replace subtrees using structural equality
-        child1_ast = cls.replace_subtree(child1_ast, p1_subtree, p2_subtree)
-        child2_ast = cls.replace_subtree(child2_ast, p2_subtree, p1_subtree)
-        
-        # Log the resulting ASTs
-        logger.debug(f"Child 1 AST after crossover: {ast.unparse(child1_ast)}")
-        logger.debug(f"Child 2 AST after crossover: {ast.unparse(child2_ast)}")
-        
-        # Validate resulting ASTs
-        is_valid1, error1 = validate_ast(child1_ast)
-        is_valid2, error2 = validate_ast(child2_ast)
-        
-        if not is_valid1 or not is_valid2:
-            logger.warning(f"Invalid offspring produced. Child 1 error: {error1}, Child 2 error: {error2}")
-            parent1.stats['crossover_validation_failures'] += 1
-            parent2.stats['crossover_validation_failures'] += 1
-            return cls(tree=copy.deepcopy(parent1.tree)), cls(tree=copy.deepcopy(parent2.tree))
-        
-        child1 = cls(tree=child1_ast)
-        child2 = cls(tree=child2_ast)
-        
-        # Track novel offspring
-        if ast.dump(child1.tree) != ast.dump(parent1.tree) and ast.dump(child1.tree) != ast.dump(parent2.tree):
-            parent1.stats['crossover_novel'] += 1
-        if ast.dump(child2.tree) != ast.dump(parent1.tree) and ast.dump(child2.tree) != ast.dump(parent2.tree):
-            parent2.stats['crossover_novel'] += 1
+        # Try up to 5 times to get valid offspring
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            # Select random subtrees from each parent
+            p1_subtree_info = random.choice(p1_subtrees)
+            p2_subtree_info = random.choice(p2_subtrees)
             
-        return child1, child2
+            p1_subtree, p1_parent, p1_field, p1_index = p1_subtree_info
+            p2_subtree, p2_parent, p2_field, p2_index = p2_subtree_info
+            
+            # Log the selected subtrees
+            logger.debug(f"Selected subtree from Parent 1: {ast.unparse(p1_subtree)}")
+            logger.debug(f"Selected subtree from Parent 2: {ast.unparse(p2_subtree)}")
+            
+            # Create copies of parent ASTs
+            child1_ast = copy.deepcopy(parent1.tree)
+            child2_ast = copy.deepcopy(parent2.tree)
+            
+            # Replace subtrees using structural equality and location tracking
+            child1_ast = cls.replace_subtree_with_location(child1_ast, p1_subtree, p2_subtree, p1_parent, p1_field, p1_index)
+            child2_ast = cls.replace_subtree_with_location(child2_ast, p2_subtree, p1_subtree, p2_parent, p2_field, p2_index)
+            
+            # Log the resulting ASTs
+            logger.debug(f"Child 1 AST after crossover: {ast.unparse(child1_ast)}")
+            logger.debug(f"Child 2 AST after crossover: {ast.unparse(child2_ast)}")
+            
+            # Validate resulting ASTs
+            is_valid1, error1 = validate_ast(child1_ast)
+            is_valid2, error2 = validate_ast(child2_ast)
+            
+            if not is_valid1 or not is_valid2:
+                logger.warning(f"Invalid offspring produced. Child 1 error: {error1}, Child 2 error: {error2}")
+                parent1.stats['crossover_validation_failures'] += 1
+                parent2.stats['crossover_validation_failures'] += 1
+                continue
+            
+            child1 = cls(tree=child1_ast)
+            child2 = cls(tree=child2_ast)
+            
+            # Check if offspring are novel
+            c1_novel = ast.dump(child1.tree) != ast.dump(parent1.tree) and ast.dump(child1.tree) != ast.dump(parent2.tree)
+            c2_novel = ast.dump(child2.tree) != ast.dump(parent1.tree) and ast.dump(child2.tree) != ast.dump(parent2.tree)
+            
+            if c1_novel:
+                parent1.stats['crossover_novel'] += 1
+            if c2_novel:
+                parent2.stats['crossover_novel'] += 1
+            
+            # If we have at least one novel offspring, return them
+            if c1_novel or c2_novel:
+                if debug_mode:
+                    logger.info("Successfully produced novel offspring")
+                    logger.info(f"Child 1 AST:\n{ast.dump(child1.tree, include_attributes=True)}")
+                    logger.info(f"Child 2 AST:\n{ast.dump(child2.tree, include_attributes=True)}")
+                return child1, child2
+            
+            # If we're on the last attempt and still no novel offspring, return the best we have
+            if attempt == max_attempts - 1:
+                logger.warning("Failed to produce novel offspring after maximum attempts")
+                return child1, child2
+        
+        # If all attempts failed, return copies of parents
+        return cls(tree=copy.deepcopy(parent1.tree)), cls(tree=copy.deepcopy(parent2.tree))
+
+    @staticmethod
+    def replace_subtree_with_location(
+        ast_tree: ast.AST,
+        old_subtree: ast.AST,
+        new_subtree: ast.AST,
+        parent: ast.AST,
+        field: str,
+        index: Optional[int]
+    ) -> ast.AST:
+        """
+        Replace a subtree in an AST with another subtree using structural equality and location tracking.
+        """
+        new_ast = ast.copy_location(
+            ast.fix_missing_locations(clone_ast(ast_tree)),
+            ast_tree
+        )
+        
+        # Find the exact node to replace using location information
+        for node in ast.walk(new_ast):
+            if isinstance(node, type(parent)):
+                for f, value in ast.iter_fields(node):
+                    if f == field:
+                        if isinstance(value, list):
+                            for i, item in enumerate(value):
+                                if isinstance(item, ast.AST) and ast.dump(item) == ast.dump(old_subtree):
+                                    if index is None or i == index:
+                                        value[i] = ast.copy_location(
+                                            ast.fix_missing_locations(clone_ast(new_subtree)),
+                                            item
+                                        )
+                        elif isinstance(value, ast.AST) and ast.dump(value) == ast.dump(old_subtree):
+                            setattr(node, field, ast.copy_location(
+                                ast.fix_missing_locations(clone_ast(new_subtree)),
+                                value
+                            ))
+        
+        return new_ast
 
     @staticmethod
     def get_compatible_subtrees(ast_tree: ast.AST) -> List[Tuple[ast.AST, ast.AST, str, Optional[int]]]:
@@ -383,6 +453,10 @@ class ProgramAST:
             ast.FunctionDef,  # Function definitions
             ast.arg,  # Function parameters
             ast.Load, ast.Store, ast.Del,  # Context nodes
+            ast.operator,  # Operator tokens
+            ast.cmpop,  # Comparison operators
+            ast.boolop,  # Boolean operators
+            ast.unaryop,  # Unary operators
         )
         
         # Nodes that can be swapped if they're part of an expression
@@ -395,6 +469,8 @@ class ProgramAST:
             ast.Attribute,  # Attribute access
             ast.Subscript,  # Subscripting
             ast.List, ast.Tuple, ast.Dict,  # Collection literals
+            ast.IfExp,  # Conditional expressions
+            ast.Lambda,  # Lambda expressions
         )
         
         # Nodes that can be swapped as standalone statements
@@ -403,6 +479,10 @@ class ProgramAST:
             ast.Assign,  # Assignment statements
             ast.AugAssign,  # Augmented assignment
             ast.Return,  # Return statements
+            ast.If,  # If statements
+            ast.For,  # For loops
+            ast.While,  # While loops
+            ast.Try,  # Try/except blocks
         )
         
         compatible_subtrees = []
@@ -443,34 +523,6 @@ class ProgramAST:
                         
         return compatible_subtrees
 
-    @staticmethod
-    def replace_subtree(ast_tree: ast.AST, old_subtree: ast.AST, new_subtree: ast.AST) -> ast.AST:
-        """
-        Replace a subtree in an AST with another subtree using structural equality.
-        """
-        new_ast = ast.copy_location(
-            ast.fix_missing_locations(clone_ast(ast_tree)),
-            ast_tree
-        )
-        
-        # Find all nodes that structurally match the old subtree
-        for parent in ast.walk(new_ast):
-            for field, old_value in ast.iter_fields(parent):
-                if isinstance(old_value, list):
-                    for i, item in enumerate(old_value):
-                        if isinstance(item, ast.AST) and ast.dump(item) == ast.dump(old_subtree):
-                            old_value[i] = ast.copy_location(
-                                ast.fix_missing_locations(clone_ast(new_subtree)),
-                                item
-                            )
-                elif isinstance(old_value, ast.AST) and ast.dump(old_value) == ast.dump(old_subtree):
-                    setattr(parent, field, ast.copy_location(
-                        ast.fix_missing_locations(clone_ast(new_subtree)),
-                        old_value
-                    ))
-                    
-        return new_ast
-
     def print_genetic_stats(self):
         """Report on genetic operator effectiveness."""
         mut_success_rate = self.stats['mutation_effective'] / max(1, self.stats['mutation_attempts'])
@@ -480,6 +532,11 @@ class ProgramAST:
         logger.info(f"Novel crossover rate: {cross_novel_rate:.1%}")
         logger.info(f"Mutation no-op rate: {self.stats['mutation_noop'] / max(1, self.stats['mutation_attempts']):.1%}")
         logger.info(f"Crossover validation failures: {self.stats['crossover_validation_failures']}")
+
+    @property
+    def ast_tree(self) -> ast.AST:
+        """Alias for self.tree to match test expectations."""
+        return self.tree
 
 class ProgramGenerator:
     """
