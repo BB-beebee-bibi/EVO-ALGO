@@ -1,0 +1,4 @@
+# file: /Users/rap_charles/Desktop/trisolaris-nerdout/EVO-ALGO/trisolaris/core/program_representation.py
+# hypothesis_version: 6.131.18
+
+[0.1, 0.5, 100, 100000, 999999, 'DEBUG_CROSSOVER', 'DEBUG_MUTATION', 'ProgramAST', 'crossover_attempts', 'crossover_novel', 'crossover_parent1', 'crossover_parent2', 'file_list', 'functional', 'functional_attribute', 'functional_binop', 'functional_call', 'functional_compare', 'mutation_attempts', 'mutation_effective', 'mutation_noop', 'point', 'point_constant', 'point_name', 'sort_files', 'sorted', 'subtree', 'temp', 'true']

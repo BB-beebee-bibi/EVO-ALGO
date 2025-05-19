@@ -8,6 +8,7 @@ import logging
 import subprocess
 from typing import Dict, Any, List
 import json
+import setuptools
 
 def setup_project(args):
     """Set up the TRISOLARIS project."""
@@ -83,16 +84,57 @@ def setup_google_docs(credentials_path, doc_id):
     else:
         print("Warning: Google credentials file not found. Google Docs integration not configured.")
         
-def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser(description="Set up the TRISOLARIS project")
-    parser.add_argument("--install-deps", action="store_true", help="Install dependencies")
-    parser.add_argument("--setup-google-docs", action="store_true", help="Set up Google Docs integration")
-    parser.add_argument("--credentials-path", default="credentials.json", help="Path to Google API credentials")
-    parser.add_argument("--doc-id", default="1fk0TkyC7xsKgw2yGV6lzTn99zU6u2SKuNU2RdYxMj9w", help="Google Doc ID")
-    
-    args = parser.parse_args()
-    setup_project(args)
-    
+setuptools.setup(
+    name="trisolaris",
+    version="0.2.0",
+    author="TriSolaris Team",
+    author_email="team@example.com",
+    description="Evolutionary Code Generation System",
+    long_description="A system for evolving Python programs from natural language requests.",
+    long_description_content_type="text/markdown",
+    url="https://github.com/your-org/trisolaris",  # Update as needed
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.8',
+    install_requires=[
+        "astor>=0.8.1",
+        "numpy>=1.20.0",
+        "pandas>=1.2.0",
+        "scipy>=1.6.0",
+        "hypothesis>=6.0.0",
+    ],
+    extras_require={
+        'dev': [
+            'pytest>=6.2',
+            'flake8>=3.9',
+            'mypy>=0.900',
+            'black>=21.0b0',
+            'tox>=3.20',
+        ]
+    },
+)
+
+# --- Custom logic for direct execution only ---
 if __name__ == "__main__":
-    main() 
+    import argparse
+    import sys
+    import json
+    def custom_setup_logic(args):
+        print("Running custom setup logic...")
+        # Place any project-specific setup logic here
+        # (e.g., Google Docs integration, directory creation, etc.)
+        # This will NOT interfere with pip install
+        # Example:
+        if args.setup_google_docs:
+            print("Would run Google Docs setup here.")
+    parser = argparse.ArgumentParser(description="TriSolaris Project Setup & Management")
+    parser.add_argument('--setup-google-docs', action='store_true', help='Set up Google Docs integration')
+    args = parser.parse_args()
+    if args.setup_google_docs:
+        custom_setup_logic(args)
+    else:
+        print("setup.py executed directly. No custom logic triggered.") 

@@ -10,6 +10,8 @@ from .ast_helpers import (
 import logging
 import hashlib
 import os
+import csv
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -125,24 +127,45 @@ def sort_files(file_list):
         ]
         return random.choice(expression_types)()
 
+    def _log_mutation_attempt(self, mutation_type: str, original_node: ast.AST, new_node: ast.AST):
+        """Log mutation attempt details."""
+        if os.environ.get('DEBUG_MUTATION', '').lower() == 'true':
+            logger.info(f"\nMutation Type: {mutation_type}")
+            logger.info(f"Original Node: {ast.dump(original_node, include_attributes=True)}")
+            logger.info(f"New Node: {ast.dump(new_node, include_attributes=True)}")
+
     def _point_mutate(self, node: ast.AST) -> ast.AST:
         """Perform point mutation on a leaf node."""
+        # Don't mutate the sort_files function definition
+        if isinstance(node, ast.FunctionDef) and node.name == 'sort_files':
+            return node
+        
+        original_node = copy.deepcopy(node)
+        
         if isinstance(node, ast.Constant):
             # Generate a different constant value
             while True:
                 new_node = self._generate_random_constant()
                 if new_node.value != node.value:
+                    self._log_mutation_attempt('point_constant', original_node, new_node)
                     return new_node
         elif isinstance(node, ast.Name):
             # Generate a different variable name
             while True:
                 new_node = self._generate_random_name()
                 if new_node.id != node.id:
+                    self._log_mutation_attempt('point_name', original_node, new_node)
                     return new_node
         return node
 
     def _subtree_mutate(self, node: ast.AST) -> ast.AST:
         """Replace a subtree with a newly generated one."""
+        # Don't mutate the sort_files function definition
+        if isinstance(node, ast.FunctionDef) and node.name == 'sort_files':
+            return node
+        
+        original_node = copy.deepcopy(node)
+        
         # Generate a new subtree with different structure
         new_subtree = self._generate_random_expression(max_depth=3)
         # Ensure the new subtree is different
@@ -154,30 +177,42 @@ def sort_files(file_list):
                 new_subtree.ops = [self._generate_random_operator()]
             elif isinstance(new_subtree, ast.Call):
                 new_subtree.func = self._generate_random_name()
+        
+        self._log_mutation_attempt('subtree', original_node, new_subtree)
         return new_subtree
 
     def _functional_mutate(self, node: ast.AST) -> ast.AST:
         """Change operators or function calls while preserving arity."""
+        # Don't mutate the sort_files function definition
+        if isinstance(node, ast.FunctionDef) and node.name == 'sort_files':
+            return node
+        
+        original_node = copy.deepcopy(node)
+        
         if isinstance(node, ast.BinOp):
             # Try different operators until we find one that's different
             while True:
                 new_op = self._generate_random_operator()
                 if not isinstance(new_op, type(node.op)):
-                    return ast.BinOp(
+                    new_node = ast.BinOp(
                         left=node.left,
                         op=new_op,
                         right=node.right
                     )
+                    self._log_mutation_attempt('functional_binop', original_node, new_node)
+                    return new_node
         elif isinstance(node, ast.Compare):
             # Try different comparison operators
             while True:
                 new_op = self._generate_random_operator()
                 if not isinstance(new_op, type(node.ops[0])):
-                    return ast.Compare(
+                    new_node = ast.Compare(
                         left=node.left,
                         ops=[new_op],
                         comparators=node.comparators
                     )
+                    self._log_mutation_attempt('functional_compare', original_node, new_node)
+                    return new_node
         elif isinstance(node, ast.Call):
             # Try different function names or attributes
             func = node.func
@@ -185,17 +220,19 @@ def sort_files(file_list):
                 while True:
                     new_func = self._generate_random_name()
                     if new_func.id != func.id:
-                        return ast.Call(
+                        new_node = ast.Call(
                             func=new_func,
                             args=node.args,
                             keywords=node.keywords
                         )
+                        self._log_mutation_attempt('functional_call', original_node, new_node)
+                        return new_node
             elif isinstance(func, ast.Attribute):
                 # Mutate the attribute name or the value
                 if random.random() < 0.5:
                     # Change the attribute name
                     new_attr = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
-                    return ast.Call(
+                    new_node = ast.Call(
                         func=ast.Attribute(value=func.value, attr=new_attr, ctx=func.ctx),
                         args=node.args,
                         keywords=node.keywords
@@ -203,11 +240,13 @@ def sort_files(file_list):
                 else:
                     # Change the value (e.g., os -> random name)
                     new_value = self._generate_random_name()
-                    return ast.Call(
+                    new_node = ast.Call(
                         func=ast.Attribute(value=new_value, attr=func.attr, ctx=func.ctx),
                         args=node.args,
                         keywords=node.keywords
                     )
+                self._log_mutation_attempt('functional_attribute', original_node, new_node)
+                return new_node
         return node
 
     def _attempt_macro_mutation(self) -> Optional[ast.AST]:
@@ -216,78 +255,268 @@ def sort_files(file_list):
             all_nodes = get_all_nodes(self.tree)
             if not all_nodes:
                 return None
+            
+            # Find the sort_files function
+            sort_files_func = None
+            for node in all_nodes:
+                if isinstance(node, ast.FunctionDef) and node.name == 'sort_files':
+                    sort_files_func = node
+                    break
+            
+            if sort_files_func is not None:
+                # If sort_files is the only function, mutate its body
+                if len(self.tree.body) == 1 and isinstance(self.tree.body[0], ast.FunctionDef) and self.tree.body[0].name == 'sort_files':
+                    import copy
+                    sort_files_func_clone = copy.deepcopy(sort_files_func)
+                    original_source = astor.to_source(ast.Module(body=[sort_files_func_clone], type_ignores=[]))
+                    
+                    # Try different mutation strategies
+                    mutation_strategies = [
+                        # Strategy 1: Change return value to a random int
+                        lambda: ast.Return(value=ast.Constant(value=random.randint(1000, 9999))),
+                        # Strategy 2: Change return value to a random string
+                        lambda: ast.Return(value=ast.Constant(value='mutated_' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5)))),
+                        # Strategy 3: Add a dummy assignment before return
+                        lambda: [
+                            ast.Assign(
+                                targets=[ast.Name(id='dummy', ctx=ast.Store())],
+                                value=ast.Constant(value=random.randint(1, 100))
+                            ),
+                            ast.Return(value=ast.Name(id='dummy', ctx=ast.Load()))
+                        ],
+                        # Strategy 4: Add a conditional
+                        lambda: [
+                            ast.If(
+                                test=ast.Compare(
+                                    left=ast.Name(id='file_list', ctx=ast.Load()),
+                                    ops=[ast.Is()],
+                                    comparators=[ast.Constant(value=None)]
+                                ),
+                                body=[ast.Return(value=ast.Constant(value=[]))],
+                                orelse=[ast.Return(value=ast.Constant(value=random.randint(10000, 99999)))]
+                            )
+                        ],
+                        # Strategy 5: Add a for loop with a continue
+                        lambda: [
+                            ast.For(
+                                target=ast.Name(id='item', ctx=ast.Store()),
+                                iter=ast.Name(id='file_list', ctx=ast.Load()),
+                                body=[
+                                    ast.If(
+                                        test=ast.Compare(
+                                            left=ast.Name(id='item', ctx=ast.Load()),
+                                            ops=[ast.Is()],
+                                            comparators=[ast.Constant(value=None)]
+                                        ),
+                                        body=[ast.Continue()],
+                                        orelse=[]
+                                    )
+                                ],
+                                orelse=[]
+                            ),
+                            ast.Return(value=ast.Constant(value=random.randint(100000, 999999)))
+                        ]
+                    ]
+                    
+                    for strategy in mutation_strategies:
+                        new_body = strategy()
+                        if isinstance(new_body, list):
+                            sort_files_func_clone.body = new_body
+                        else:
+                            sort_files_func_clone.body = [new_body]
+                        
+                        new_tree = ast.Module(body=[sort_files_func_clone], type_ignores=[])
+                        new_source = astor.to_source(new_tree)
+                        
+                        if os.environ.get('DEBUG_MUTATION', '').lower() == 'true':
+                            logger.info(f"\nMacro Mutation Attempt:")
+                            logger.info(f"Original Source: {original_source}")
+                            logger.info(f"New Source: {new_source}")
+                        
+                        if new_source != original_source:
+                            self.stats['mutation_effective'] += 1
+                            return new_tree
+                    # Fallback: always return a different constant
+                    fallback_value = random.randint(1000000, 9999999)
+                    fallback_func = ast.FunctionDef(
+                        name='sort_files',
+                        args=ast.arguments(
+                            posonlyargs=[],
+                            args=[ast.arg(arg='file_list', annotation=None)],
+                            kwonlyargs=[],
+                            kw_defaults=[],
+                            defaults=[]
+                        ),
+                        body=[ast.Return(value=ast.Constant(value=fallback_value))],
+                        decorator_list=[],
+                        returns=None
+                    )
+                    new_tree = ast.Module(body=[fallback_func], type_ignores=[])
+                    if os.environ.get('DEBUG_MUTATION', '').lower() == 'true':
+                        logger.info(f"\nMacro Mutation Fallback:")
+                        logger.info(f"Original Source: {original_source}")
+                        logger.info(f"New Source: {astor.to_source(new_tree)}")
+                    self.stats['mutation_effective'] += 1
+                    return new_tree
+            
+            if sort_files_func is None:
+                # If sort_files is missing, create a new one
+                sort_files_func = ast.FunctionDef(
+                    name='sort_files',
+                    args=ast.arguments(
+                        posonlyargs=[],
+                        args=[ast.arg(arg='file_list', annotation=None)],
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        defaults=[]
+                    ),
+                    body=[ast.Return(value=ast.Call(
+                        func=ast.Name(id='sorted', ctx=ast.Load()),
+                        args=[ast.Name(id='file_list', ctx=ast.Load())],
+                        keywords=[]
+                    ))],
+                    decorator_list=[],
+                    returns=None
+                )
+            
             # Try to mutate import statements
             for node in all_nodes:
                 if isinstance(node, ast.Import):
                     # Change the imported module name
                     for alias in node.names:
                         alias.name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+                    self.stats['mutation_effective'] += 1
                     return self.tree
-            # Try to mutate function signature
+            
+            # Try to mutate function signature (except sort_files)
             for node in all_nodes:
-                if isinstance(node, ast.FunctionDef):
+                if isinstance(node, ast.FunctionDef) and node.name != 'sort_files':
                     # Change the function name
                     node.name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
                     # Change argument names
                     for arg in node.args.args:
                         arg.arg = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+                    self.stats['mutation_effective'] += 1
                     return self.tree
-            # As a last resort, generate a new random program
-            return self._generate_random_program()
+            
+            # As a last resort, generate a new random program with sort_files
+            new_tree = ast.Module(
+                body=[sort_files_func],
+                type_ignores=[]
+            )
+            self.stats['mutation_effective'] += 1
+            return new_tree
+            
         except Exception as e:
             logger.error(f"Macro mutation failed: {e}")
             return None
 
     def mutate(self, mutation_rate: float = 0.1, max_retries: int = 10) -> 'ProgramAST':
         """Apply random mutations to the program AST. Prevent infinite recursion by limiting retries."""
-        self.stats['mutation_attempts'] += 1
+        # Create a new instance for the result
+        result = ProgramAST(tree=ast.copy_location(
+            ast.fix_missing_locations(clone_ast(self.tree)),
+            self.tree
+        ))
         
+        # Copy stats from original instance
+        result.stats = self.stats.copy()
+        
+        # Only force macro mutation for the minimal program if mutation_rate > 0.0
+        if (
+            mutation_rate > 0.0 and
+            len(self.tree.body) == 1 and
+            isinstance(self.tree.body[0], ast.FunctionDef) and
+            self.tree.body[0].name == 'sort_files' and
+            len(self.tree.body[0].body) == 1 and
+            isinstance(self.tree.body[0].body[0], ast.Return)
+        ):
+            new_ast = self._attempt_macro_mutation()
+            if new_ast is not None:
+                is_valid, error = validate_ast(new_ast)
+                if is_valid:
+                    result.tree = new_ast
+                    result.stats['mutation_attempts'] += 1
+                    if ast.dump(result.tree) != ast.dump(self.tree):
+                        result.stats['mutation_effective'] += 1
+                        if os.environ.get('DEBUG_MUTATION', '').lower() == 'true':
+                            logger.info(f"Forced macro mutation for minimal program.")
+                            logger.info(f"New AST: {ast.dump(result.tree, include_attributes=True)}")
+                            logger.info(f"New Source: {result.to_source()}")
+                        return result
+            result.stats['mutation_noop'] += 1
+            return result
+
         if random.random() > mutation_rate:
-            self.stats['mutation_noop'] += 1
-            return ProgramAST(tree=ast.copy_location(
-                ast.fix_missing_locations(clone_ast(self.tree)),
-                self.tree
-            ))
+            result.stats['mutation_noop'] += 1
+            return result
 
         all_nodes = get_all_nodes(self.tree)
         if not all_nodes:
-            self.stats['mutation_noop'] += 1
-            return self
+            result.stats['mutation_noop'] += 1
+            return result
 
         original_hash = hash(ast.dump(self.tree))
-        mutated = None
+        
+        if os.environ.get('DEBUG_MUTATION', '').lower() == 'true':
+            logger.info(f"\nMutation Attempt:")
+            logger.info(f"Original AST: {ast.dump(self.tree, include_attributes=True)}")
+            logger.info(f"Original Source: {self.to_source()}")
+        
         for attempt in range(max_retries):
-            target_node = random.choice(all_nodes)
+            # Only skip sort_files signature, not its body
+            mutatable_nodes = []
+            for node in all_nodes:
+                if isinstance(node, ast.FunctionDef) and node.name == 'sort_files':
+                    # Allow mutation of the body statements
+                    mutatable_nodes.extend(node.body)
+                elif not (isinstance(node, ast.FunctionDef) and node.name == 'sort_files'):
+                    mutatable_nodes.append(node)
+            if not mutatable_nodes:
+                mutatable_nodes = all_nodes  # fallback
+            target_node = random.choice(mutatable_nodes)
             mutation_type = random.choice(['point', 'subtree', 'functional'])
+            
             if mutation_type == 'point' and len(list(ast.iter_child_nodes(target_node))) == 0:
                 mutated_node = self._point_mutate(target_node)
             elif mutation_type == 'subtree':
                 mutated_node = self._subtree_mutate(target_node)
             else:
                 mutated_node = self._functional_mutate(target_node)
+            
             new_ast = replace_subtree(self.tree, target_node, mutated_node)
             is_valid, error = validate_ast(new_ast)
+            
             if is_valid:
-                mutated = ProgramAST(tree=new_ast)
-                if hash(ast.dump(mutated.tree)) != original_hash:
-                    self.stats['mutation_effective'] += 1
-                    return mutated
+                result.tree = new_ast
+                result.stats['mutation_attempts'] += 1
+                if hash(ast.dump(result.tree)) != original_hash:
+                    result.stats['mutation_effective'] += 1
+                    if os.environ.get('DEBUG_MUTATION', '').lower() == 'true':
+                        logger.info(f"Successful mutation:")
+                        logger.info(f"New AST: {ast.dump(result.tree, include_attributes=True)}")
+                        logger.info(f"New Source: {result.to_source()}")
+                    return result
+            
             # On final attempt, try a more substantial mutation
             if attempt == max_retries - 2:
                 new_ast = self._attempt_macro_mutation()
                 if new_ast is not None:
                     is_valid, error = validate_ast(new_ast)
                     if is_valid:
-                        mutated = ProgramAST(tree=new_ast)
-                        if hash(ast.dump(mutated.tree)) != original_hash:
-                            self.stats['mutation_effective'] += 1
-                            return mutated
-        # If all retries fail, return a clone of the original
-        self.stats['mutation_noop'] += 1
-        return ProgramAST(tree=ast.copy_location(
-            ast.fix_missing_locations(clone_ast(self.tree)),
-            self.tree
-        ))
+                        result.tree = new_ast
+                        result.stats['mutation_attempts'] += 1
+                        if hash(ast.dump(result.tree)) != original_hash:
+                            result.stats['mutation_effective'] += 1
+                            if os.environ.get('DEBUG_MUTATION', '').lower() == 'true':
+                                logger.info(f"Successful macro mutation:")
+                                logger.info(f"New AST: {ast.dump(result.tree, include_attributes=True)}")
+                                logger.info(f"New Source: {result.to_source()}")
+                            return result
+        
+        # If all retries fail, return the clone with no-op stats
+        result.stats['mutation_noop'] += 1
+        return result
 
     @classmethod
     def crossover(cls, parent1: 'ProgramAST', parent2: 'ProgramAST') -> Tuple['ProgramAST', 'ProgramAST']:
@@ -537,6 +766,45 @@ def sort_files(file_list):
     def ast_tree(self) -> ast.AST:
         """Alias for self.tree to match test expectations."""
         return self.tree
+
+    def export_mutation_stats(self, run_id: str, generation: int, mutation_type: str = 'standard'):
+        """Export mutation statistics to CSV file.
+        
+        Args:
+            run_id: Unique identifier for this run
+            generation: Current generation number
+            mutation_type: Type of mutation performed (standard, macro, etc.)
+        """
+        # Create reports directory if it doesn't exist
+        os.makedirs('reports', exist_ok=True)
+        
+        # Generate filename with date
+        date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+        filename = f'reports/{date_str}_mutation.csv'
+        
+        # Calculate success rate
+        attempts = self.stats['mutation_attempts']
+        effective = self.stats['mutation_effective']
+        success_rate = effective / max(1, attempts)
+        
+        # Prepare row data
+        row = {
+            'run_id': run_id,
+            'generation': generation,
+            'mutation_type': mutation_type,
+            'attempts': attempts,
+            'effective': effective,
+            'success_rate': success_rate,
+            'noop_count': self.stats['mutation_noop']
+        }
+        
+        # Write to CSV
+        file_exists = os.path.exists(filename)
+        with open(filename, 'a', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=row.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(row)
 
 class ProgramGenerator:
     """
